@@ -23,24 +23,49 @@ import re
 import random
 import argparse
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "vits"))
+# Add the vits/ directory to sys.path so that bare imports used by vits
+# internals (e.g. `import commons`, `import modules`) resolve correctly.
+_VITS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "vits")
+sys.path.insert(0, _VITS_DIR)
 
 import numpy as np
 import torch
 from scipy.io.wavfile import write as write_wav
 
+# monotonic_align requires a Cython extension that may not be built.
+# It is only used during training, not inference, so mock it if missing.
+import types
+try:
+    import monotonic_align  # noqa: F401
+except (ImportError, ModuleNotFoundError):
+    _ma = types.ModuleType("monotonic_align")
+    _ma.__path__ = []
+    sys.modules["monotonic_align"] = _ma
+
 from models import SynthesizerTrn
-from text import text_to_sequence_phn
-from text.symbols import symbols
 import commons
 import utils
+
+# Load symbols directly from text/symbols.py, bypassing text/__init__.py
+# which pulls in cleaners → unidecode, phonemizer (not needed for inference).
+import importlib.util as _ilu
+_spec = _ilu.spec_from_file_location("text.symbols", os.path.join(_VITS_DIR, "text", "symbols.py"))
+_sym_mod = _ilu.module_from_spec(_spec)
+_spec.loader.exec_module(_sym_mod)
+symbols = _sym_mod.symbols
+
+_symbol_to_id = {s: i for i, s in enumerate(symbols)}
+
+def text_to_sequence_phn(phonemes: str) -> list[int]:
+    """Convert a cleaned IPA string to a sequence of symbol IDs."""
+    return [_symbol_to_id[c] for c in phonemes if c in _symbol_to_id]
 
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
 
-CHECKPOINT_PATH = os.path.join(os.path.dirname(__file__), "vits", "pretrained_vctk.pth")
-CONFIG_PATH     = os.path.join(os.path.dirname(__file__), "vits", "configs", "vctk_base.json")
+CHECKPOINT_PATH = os.path.join(_VITS_DIR, "pretrained_vctk.pth")
+CONFIG_PATH     = os.path.join(_VITS_DIR, "configs", "vctk_base.json")
 
 SILENCE_SECS        = 0.30   # silence between sentence-boundary chunks
 PAUSE_SECS          = 0.15   # silence appended after an in-word [PAU]
