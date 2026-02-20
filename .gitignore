@@ -1,3 +1,4 @@
+*.env env/
 vits/
 *.pth
 # Byte-compiled / optimized / DLL files
