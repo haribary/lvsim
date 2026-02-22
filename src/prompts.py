@@ -104,9 +104,15 @@ No-Invention Constraints
 - Do not add evaluative commentary that wasn’t present in the reference_text.
 - Do not remove key events entirely; if a clause is abandoned, express the key meaning elsewhere in simpler form.
 
+Abandoned utterances
+ (trailing off when retrieval failure causes complete loss of the sentence plan)
+ Example: "And then she was going to—uh—I know what I mean but—anyway, so then they left."
 
-{severity_constraints}
 
+Metacognitive comments
+ (the speaker acknowledges their retrieval difficulty)
+ Example: "It's the—what do you call it—the thing on the wall."
+ Example: "I know what I wanna say but I can't get it out."
 
 Important
 Your output is input to a downstream phoneme-level dysfluency system.
@@ -124,6 +130,7 @@ _L2_SEVERITY_DISTRIBUTION = {
 - Pauses [PAU] should be infrequent — at most one or two in the entire output.
 - Syllable repetitions [REP] should be very rare or absent.
 - Insertions [INS] should be very rare or absent.
+- Substitutions [SUB] should be very rare or absent.
 - Dysfluencies may loosely cluster near word-level disruptions but most words should be untouched.
 - Favor content words (nouns, verbs) over function words for most dysfluency types.""",
 
@@ -132,8 +139,9 @@ _L2_SEVERITY_DISTRIBUTION = {
 - Dysfluencies cluster near word-level disruptions but may appear elsewhere.
 - Multiple markers may appear on the same word if natural.
 - Avoid over-clustering. Aim for naturalistic distribution.
-- Use a mix of dysfluency types: prolongations [PRO], deletions [DEL], pauses [PAU], and repetitions [REP].
-- Pauses and repetitions should appear more frequently than at mild severity.
+- Use a mix of dysfluency types: prolongations [PRO], deletions [DEL], pauses [PAU], repetitions [REP], and substitutions [SUB].
+- Pauses, repetitions, and substitutions should appear more frequently than at mild severity.
+- Substitutions should reflect phonological neighborhood errors — the substituted phoneme should be articulatorily close to the target (e.g., similar place or manner of articulation).
 - Favor content words (nouns, verbs) over function words for most dysfluency types.""",
 
     2: """DISTRIBUTION & REALISM
@@ -141,7 +149,8 @@ _L2_SEVERITY_DISTRIBUTION = {
 - Apply dysfluencies heavily throughout the IPA output.
 - Multi-type dysfluencies should co-occur on or around the same word (e.g., a prolongation followed by a pause, then a repetition).
 - Frequent blocks [PAU] and syllable repetitions [REP] are expected.
-- Deletions [DEL] and insertions [INS] should appear regularly, sometimes multiple per word.
+- Deletions [DEL], insertions [INS], and substitutions [SUB] should appear regularly, sometimes multiple per word.
+- Substitutions may be more phonologically distant at this severity — reflecting greater phonological instability.
 - Some words may be left incomplete via heavy deletion.
 - Dysfluency clusters should be dense near word-level disruptions, but isolated dysfluencies should also appear on otherwise fluent stretches.
 - Favor content words (nouns, verbs) over function words for most dysfluency types.""",
@@ -223,17 +232,44 @@ DYSFLUENCY TYPES & RULES
    WRONG:    fˈiːlɪŋ [PRO]    (marker must be inside the word)
 
 5. Syllable Repetition [REP]
-   Repeat the first syllable or onset of a word directly before the full word,
-   connected with ... (three dots, no space before the full word).
+   Repeat the first FULL SYLLABLE (onset + nucleus, or nucleus alone if no onset) of a word directly before the full word, connected with ... (three dots, no space before the full word).
    Place [REP] as a STANDALONE TOKEN after the full word.
 
-   Word "large" = lˈɑːʤ
-   CORRECT:  lˈɑː...lˈɑːʤ [REP]
-   Word "checking" = tʃˈɛkɪŋ
-   CORRECT:  tʃˈɛk...tʃˈɛkɪŋ [REP]
+   The repeated portion must be a complete syllable — not just the onset consonant(s) alone.
+   Include the onset consonant(s) AND the vowel nucleus of the first syllable.
 
-   The pattern is always: <partial_word>...<full_word> [REP]
+   Word "large" = lˈɑːʤ
+   CORRECT:  lˈɑː...lˈɑːʤ [REP]        (repeated first syllable: onset l + nucleus ɑː)
+   WRONG:    l...lˈɑːʤ [REP]            (onset only — missing the vowel nucleus)
+
+   Word "checking" = tʃˈɛkɪŋ
+   CORRECT:  tʃˈɛk...tʃˈɛkɪŋ [REP]     (repeated first syllable: onset tʃ + nucleus ɛ + coda k)
+   WRONG:    tʃ...tʃˈɛkɪŋ [REP]         (onset only — missing the vowel)
+
+   Word "open" = ˈoʊpən
+   CORRECT:  ˈoʊ...ˈoʊpən [REP]         (no onset; repeated nucleus oʊ of first syllable)
+   WRONG:    ˈoʊpən...ˈoʊpən [REP]      (repeated entire word, not just first syllable)
+
+   The pattern is always: <first_syllable>...<full_word> [REP]
    Do not add spaces inside the repetition unit (lˈɑː...lˈɑːʤ is one token).
+
+6. Substitution [SUB]
+   Replace one phoneme CHARACTER inside a word token with a different phoneme.
+   Place [SUB] immediately after the substituted (new) phoneme.
+
+   The substituted phoneme must be DIFFERENT from the original phoneme.
+   The substitution should be a real phoneme that could plausibly result from phonological error.
+
+   Word "milk" = mˈɪlk
+   CORRECT:  mˈɪn[SUB]k       (substituted n for l — both alveolar, plausible error)
+   WRONG:    mˈɪlk[SUB]       (no phoneme was actually substituted)
+   WRONG:    mˈɪl[SUB]k       (tag must follow the NEW phoneme, not the original)
+   WRONG:    m ˈɪ n[SUB] k    (do NOT split the word into separate phone tokens)
+
+   Word "feeling" = fˈiːlɪŋ
+   CORRECT:  fˈiːlɪn[SUB]     (substituted n for ŋ — both nasals, plausible error)
+
+   Prefer articulatorily close substitutions (same place or manner of articulation) at mild and moderate severity.
 
 ---
 
@@ -242,7 +278,7 @@ CRITICAL RULES
 - NEVER split a word token into individual phone tokens separated by spaces.
 - NEVER add spaces between phoneme characters within a word.
 - [PAU] and [REP] are standalone tokens (surrounded by spaces).
-- [DEL], [INS], [PRO] are embedded inside word tokens (no surrounding spaces).
+- [DEL], [INS], [PRO], [SUB] are embedded inside word tokens (no surrounding spaces).
 - Preserve all | sentence boundary markers exactly as given.
 - Output only IPA with markers. No JSON, no explanation, no extra text.
 
@@ -271,11 +307,11 @@ def get_prompts(severity: int) -> tuple[str, str]:
 
 def get_ref_text():
     return ["""
-My best trip was hiking in New Zealand’s South Island with a couple friends. We did a mix: a few days around Queenstown, then drove to Mount Cook, and ended with a shorter multi-day track because none of us wanted to carry huge packs for a week. The scenery was ridiculous—glacial lakes that look fake, wind that hits you sideways, and these quiet stretches where you can hear nothing but your footsteps. The highlight was getting up early, making instant coffee in the cold, and watching the light change on the mountains. We weren’t chasing adrenaline; it was more like moving all day, eating a lot, sleeping hard, repeat. On the drive days we’d stop at random viewpoints and just sit there. It’s the trip I think about whenever I feel burnt out.
+My best trip was hiking in New Zealand's South Island with a couple friends. We did a mix: a few days around Queenstown, then drove to Mount Cook, and ended with a shorter multi-day track because none of us wanted to carry huge packs for a week. The scenery was ridiculous—glacial lakes that look fake, wind that hits you sideways, and these quiet stretches where you can hear nothing but your footsteps. The highlight was getting up early, making instant coffee in the cold, and watching the light change on the mountains. We weren't chasing adrenaline; it was more like moving all day, eating a lot, sleeping hard, repeat. On the drive days we'd stop at random viewpoints and just sit there. It's the trip I think about whenever I feel burnt out.
             """,
             """
-When I was a kid, my grandparents used to take me to this little lake early in the morning. We’d go before it got hot, bring a thermos of tea, and just sit on the dock with our feet in the water. My grandpa would point out birds and tell me their names like it was important information. I didn’t fully get it at the time, but I remember feeling really calm and safe, like there was nowhere else I needed to be. Even now, the smell of lake water and sunscreen takes me straight back.
+When I was a kid, my grandparents used to take me to this little lake early in the morning. We'd go before it got hot, bring a thermos of tea, and just sit on the dock with our feet in the water. My grandpa would point out birds and tell me their names like it was important information. I didn't fully get it at the time, but I remember feeling really calm and safe, like there was nowhere else I needed to be. Even now, the smell of lake water and sunscreen takes me straight back.
             """,
             """
-What I like about where I live is how easy it is to have a “real” day without planning it. I can walk to get coffee, run errands, and still end up at a park or a trail on a random afternoon. The neighborhoods feel like they have their own personalities, so even a short walk looks different depending on which direction I go. I also like that there’s always something going on—farmers markets, small events, weird pop-ups—but it doesn’t feel like you have to participate in everything. It’s just there if you want it.
+What I like about where I live is how easy it is to have a "real" day without planning it. I can walk to get coffee, run errands, and still end up at a park or a trail on a random afternoon. The neighborhoods feel like they have their own personalities, so even a short walk looks different depending on which direction I go. I also like that there's always something going on—farmers markets, small events, weird pop-ups—but it doesn't feel like you have to participate in everything. It's just there if you want it.
             """]
