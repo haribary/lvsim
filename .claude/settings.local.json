@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(/Users/kevin/Desktop/lvsim/.venv/bin/python:*)"
-    ]
-  }
-}

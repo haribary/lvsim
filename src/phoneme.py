@@ -1,9 +1,9 @@
 import os
 import re
-os.environ.setdefault("PHONEMIZER_ESPEAK_LIBRARY", "/opt/homebrew/lib/libespeak-ng.dylib")
+#os.environ.setdefault("PHONEMIZER_ESPEAK_LIBRARY", "/opt/homebrew/lib/libespeak-ng.dylib")
 os.environ.setdefault(
     "PHONEMIZER_ESPEAK_BINARY",
-    "/opt/homebrew/bin/espeak-ng"
+    "/home/liharrison/local/bin/espeak-ng"
 )
 
 from phonemizer import phonemize

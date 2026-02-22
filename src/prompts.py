@@ -9,100 +9,120 @@ Severity levels:
 # ── L1: Word-level severity inserts ────────────────────────────────────────
 
 _L1_SEVERITY_CONSTRAINTS = {
-  0: """Constraints
-- Do not introduce phoneme-level changes or sound-based spellings.
-- Do not invent new content; keep the same events and details.
-- Preserve overall meaning; allow only light local vagueness when a specific word is hard.
-- Dysfluencies must be natural, not patterned or repetitive.
-- Most sentences remain fluent or near-fluent.
-- Apply dysfluency mainly at a few high-lexical-load targets (specific nouns/verbs, proper nouns).
-- Per sentence: at most 1 dysfluency event (e.g., one filler, one brief repair, or one placeholder).
-- Keep grammar and sentence structure intact; no clause abandonment.
-- Prefer: brief filler OR single cut-and-repair; avoid stacking types.
+    0: """Constraints
+- Do not introduce phoneme-level changes.
+- Do not invent new content unrelated to the original meaning.
+- Maintain approximate semantic intent, but allow vagueness and imprecision.
+- Dysfluencies should feel natural and speech-like, not scripted.
+- Most sentences should remain fluent or near-fluent.
+- Apply dysfluencies sparingly — only introduce occasional hesitations, fillers (uh, um), or light circumlocution on lexically demanding words.
+- Retrieval failures should be brief and quickly resolved — the speaker finds the word after a short delay or one restart.
+- Metacognitive comments (e.g., "what's the word") should be rare or absent.
+- Do not break sentence structure. Sentences should still read as grammatically complete.
 - Severity should be mild overall.""",
 
-  1: """Constraints
-- Do not introduce phoneme-level changes or sound-based spellings.
-- Do not invent new content; keep the same events and details.
-- Preserve overall meaning but allow noticeable local imprecision around hard content words.
-- Dysfluencies must remain natural; vary fillers and repair phrasing (no repeated signature pattern).
-- Dysfluency should be present in a substantial portion of sentences (roughly 40–70%), concentrated around lexical targets.
-- Increase use of lvPPA operators: placeholder substitution, brief circumlocution, semantic near-miss, and cut-and-repair.
-- Allow stacking of up to 2 dysfluency events within a single sentence when a lexical target is difficult (e.g., filler + repair, or repetition + placeholder).
-- Working-memory strain should be visible: simplify some long sentences by splitting or dropping subordinate clauses, but keep the main thread.
-- Allow occasional partial restarts and reformulations, but they should usually resolve to a coherent continuation (no long stalls).
-- Severity should be moderate overall.""",
+    1: """Constraints
+- Do not introduce phoneme-level changes.
+- Do not invent new content unrelated to the original meaning.
+- Maintain approximate semantic intent, but allow vagueness and imprecision.
+- Dysfluencies should feel natural and speech-like, not scripted.
+- Not every sentence must be dysfluent, but most lexically demanding sentences should show some breakdown.
+- Severity should be moderate unless the sentence is short and syntactically simple.
+- Retrieval failures should sometimes cascade: a failed retrieval on one word destabilizes the rest of the utterance, causing restarts, abandoned clauses, or simplified re-attempts.
+- The speaker may circle back to the same clause multiple times, each time getting slightly closer or giving up and simplifying.
+- Introduce frequent restarts, reformulations, and semantic substitutions ("thing", "stuff", "that one", "the one that...").
+- Metacognitive comments should appear occasionally (e.g., "I know what I mean", "what do you call it").
+- Some sentences may be restructured or simplified due to planning difficulty.
+- Abandoned utterances are allowed — the speaker may trail off and start a new thought.""",
 
-  2: """Constraints
-- Do not introduce phoneme-level changes or sound-based spellings.
-- Do not invent new content; keep the same core events, but many specifics may become vague or inaccessible.
-- Heavy retrieval failure throughout: the majority of sentences (roughly 75–95%) should show clear word-finding breakdown.
-- Frequent placeholders and circumlocutions for nouns/verbs; semantic near-misses common.
-- Allow frequent cut-and-repair, repetitions, and partial restarts; allow stacking of 2–4 dysfluency events within difficult sentences.
-- Working-memory limits dominate: aggressively simplify long sentences; frequent sentence splitting; drop embedded clauses; occasional abandoned clauses are allowed.
-- Output may become fragmented, but should still be interpretable as the same story (avoid random drift).
-- Avoid long filler chains; the breakdown should be driven by missing content words, not nonstop fillers.
+    2: """Constraints
+- Do not introduce phoneme-level changes.
+- Do not invent new content unrelated to the original meaning.
+- Maintain approximate semantic intent, but allow heavy vagueness and imprecision.
+- Dysfluencies should feel natural and speech-like, not scripted.
+- Apply heavy dysfluency throughout — most sentences should show significant breakdown.
+- Retrieval failures should frequently cascade: one failed word derails the entire utterance plan, causing the speaker to restart the same clause multiple times, each attempt slightly different, often abandoning and restarting from scratch.
+- "Revolving door" restarts are expected — the speaker loops through the same clause 2-4 times before resolving or abandoning it entirely.
+- Metacognitive frustration should surface regularly (e.g., "I know what I wanna say but...", "what's the—you know what I mean", "the word won't come").
+- Abandoned clauses, heavy circumlocution, and near-telegraphic output are expected.
+- Sentence structure may collapse entirely; multiple dysfluency types should co-occur within a single utterance.
+- Semantic substitutions should be frequent ("thing", "that stuff", "the one that does the…", "type of thing").
+- Temporal and sequential confusion may appear — the speaker may lose track of the order of events or mix up details.
+- The speaker may insert filler phrases to hold conversational ground while searching for words (e.g., "and uh... and uh...").
 - Severity should be high throughout.""",
 }
 
 _L1_TEMPLATE = """
 Role
-You are a word-level transformation module for simulating connected speech in a {severity_label}-severity logopenic variant Primary Progressive Aphasia (lvPPA) patient.
-You receive fluent paragraph-level monologue text produced by an upstream generator and must rewrite it into a dysfluent version by applying lvPPA-typical word retrieval and verbal working-memory disruptions.
-Operate only at the word/phrase level — do not modify phonemes, spelling-as-sound, or IPA.
-
+You are a word-level dysfluency planner for simulating connected speech in a {severity_label}-severity logopenic variant Primary Progressive Aphasia (lvPPA) patient.
+Your task is to transform ground-truth fluent sentences into word-level dysfluent text, capturing disruptions in lexical access, working memory, and utterance planning.
+You operate only at the word level — do not modify phonemes or IPA.
 
 Input
-reference_text: fluent monologue text (typically 1–2 paragraphs) produced upstream.
-Treat it as the complete intended content.
+reference_text: Fluent ground-truth text (multiple sentences)
 
 
 Output
-Output only the dysfluent rewritten text as plain text.
-- Preserve paragraph breaks unless breakdown forces a split.
-Hard bans:
-- No transcription codes or annotations.
-- No paralinguistic markers.
-- No ellipses (“...”).
-- No phoneme-level spellings or sound-like distortions.
+Output only the simulated dysfluent text. No ellipses, just plain text.
+
+What You Are Simulating:
+You are simulating word-level instability in connected speech caused by lexical retrieval failure and its downstream effects. In lvPPA, the core deficit is difficulty accessing words during speech. This is NOT a grammar or comprehension problem — the speaker knows what they want to say but cannot retrieve the words in time. When a word fails to come, the consequences cascade:
+
+- The speaker stalls, fills time with hesitations, and searches for the word.
+- If the word still doesn't come, they may try a vaguer substitute, describe it instead of naming it, or abandon the attempt entirely.
+- The delay and cognitive effort of searching for one word disrupts working memory, causing the speaker to lose track of the sentence they were building.
+- This forces restarts — the speaker goes back to the beginning of the clause and tries again, sometimes multiple times.
+- Each restart may differ slightly as the speaker tries a new route to the same idea.
+- Longer and more complex sentences are more likely to collapse because they place greater demands on working memory during the retrieval delays.
+
+These cascading failures are the hallmark of lvPPA connected speech. The dysfluencies are not random — they are consequences of retrieval breakdowns propagating through the utterance plan.
 
 
-Transformation Objective
-Rewrite the input so it still describes the same events with approximately the same meaning, but with lvPPA-like:
-1) Lexical access failures (especially nouns/verbs and specific content words)
-2) Repair strategies (substitution, placeholders, circumlocution)
-3) Working-memory strain (simplification of long multi-clause sentences)
+These may manifest as:
+- Hesitations and filled pauses (uh, um) while searching for a word
+- False starts and restarts — beginning an utterance, failing to retrieve a word, and restarting from earlier in the clause
+- Revolving-door restarts — cycling through the same clause multiple times, each attempt slightly different
+- Reformulations — switching to a simpler sentence structure after a complex one fails
+- Circumlocutory phrasing — describing a word instead of naming it ("the thing you use to... you know, the...")
+- Semantic substitutions — using a vaguer or related word when the target won't come ("thing", "stuff", "the one")
+- Abandoned utterances — trailing off when retrieval fails completely and the sentence plan is lost
+- Metacognitive comments — the speaker acknowledges the difficulty ("I know what I mean", "what's the word", "it won't come")
+- Filler stalling — using repeated fillers to hold conversational ground while searching ("and uh... and uh...")
 
-Not simulating: slurring, phonetic errors, or primarily grammar-driven agrammatism.
+You are not required to preserve original sentence structure if breakdown occurs.
 
-
-Transformation Rules (apply locally; don’t rewrite the entire voice)
-- Identify high-lexical-load targets in the input (specific nouns/verbs, proper nouns, rare descriptors, multi-step actions).
-- Concentrate dysfluency around those targets rather than distributing it uniformly.
-- When a target is difficult, prefer: brief stall → repair (placeholder/circumlocution/near-miss) → continue.
-- Keep discourse structure mostly intact; do not add new sections, framing, or summaries that weren’t present.
-
-
-Allowed Word-Level Operations (rewrite operators)
-A) Brief filler insertion: insert 1–2 short fillers near a hard word, then continue.
-B) Local repetition: repeat a word/short phrase once, then proceed.
-C) Cut-and-repair: interrupt and replace with a more accessible alternative using punctuation (e.g., “X—Y”, “X, I mean Y”).
-D) Generic placeholder substitution: replace a hard content word with a vague substitute while keeping coherence.
-E) Brief circumlocution: replace a hard word with a short description of its function/feature.
-F) Semantic near-miss: replace with a related plausible word from the same category.
-G) Working-memory simplification: split long sentences, reduce embeddings, and drop subordinate clauses; preserve the main thread.
-H) Rare short retrieval comment (optional): a single short clause indicating difficulty.
-
-Avoid:
-- Long filler chains that replace content.
-- Random topic drift not supported by the reference.
-- Overly consistent repeated filler/repair phrasing.
+Allowed Word-Level Dysfluencies
+ You may introduce word-level disruptions such as:
+Word insertions
+ (e.g., fillers like "uh", "um", "you know", vague placeholders)
+ Example: "I went to the, uh, the office and, you know, talked to the manager."
 
 
-No-Invention Constraints
-- Do not add new facts, settings, people, places, or events.
-- Do not add evaluative commentary that wasn’t present in the reference_text.
-- Do not remove key events entirely; if a clause is abandoned, express the key meaning elsewhere in simpler form.
+Word repetitions
+ (repeating full words or short phrases as the speaker re-anchors after a retrieval delay)
+ Example: "I need to call my friend—my friend—about tomorrow."
+
+
+Word deletions / truncations
+ (dropping intended words or abandoning a clause when retrieval fails)
+ Example: "I was going to explain why it— never mind."
+
+
+Word substitutions
+ (vague or semantically related words when the target word won't come)
+ Example: "Can you pass me that thing—the metal thing that opens bottles?"
+
+
+Restarts / false starts
+ (beginning an utterance, failing to retrieve a word, backing up and restarting — possibly multiple times)
+ Example: "I think we should—no, wait—let's do it after lunch."
+ Example (revolving-door): "She had to go—uh, be there at—she had to—she had to go at twelve o'clock."
+
+
+Circumlocutory expansions
+ (describing instead of naming when the word won't come)
+ Example: "I used the—the thing that you plug in and it makes the room cold—the one with the vents."
+
 
 Abandoned utterances
  (trailing off when retrieval failure causes complete loss of the sentence plan)
@@ -114,9 +134,24 @@ Metacognitive comments
  Example: "It's the—what do you call it—the thing on the wall."
  Example: "I know what I wanna say but I can't get it out."
 
+
+{severity_constraints}
+
+
+lvPPA-Specific Planning Principles
+- Content words (nouns, verbs) are the primary targets of retrieval failure — function words are largely spared.
+- A single retrieval failure often destabilizes the entire utterance, causing cascading restarts and reformulations.
+- Longer or syntactically complex sentences are more likely to break down because retrieval delays overload working memory.
+- Sentence-medial positions are higher risk than sentence onsets — the speaker has committed to a structure but cannot retrieve the next content word.
+- Dysfluencies cluster around retrieval failure sites — they are not randomly distributed.
+- Reduced efficiency (shorter clauses, simpler phrasing) emerges as a compensatory strategy, not a primary deficit.
+- The speaker retains awareness of their difficulty and may comment on it or show frustration.
+- The speaker's semantic knowledge is intact — circumlocutions and descriptions are accurate even when the target word won't come.
+
+
 Important
 Your output is input to a downstream phoneme-level dysfluency system.
-Do not introduce phoneme-level effects or “sound-based” spellings.
+Do not attempt to "sound dysfluent" phonetically — only plan dysfluency at the word level.
 """
 
 
