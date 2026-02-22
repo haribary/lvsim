@@ -9,127 +9,108 @@ Severity levels:
 # ── L1: Word-level severity inserts ────────────────────────────────────────
 
 _L1_SEVERITY_CONSTRAINTS = {
-    0: """Constraints
-- Do not introduce phoneme-level changes.
-- Do not invent new content unrelated to the original meaning.
-- Maintain approximate semantic intent, but allow vagueness and imprecision.
-- Dysfluencies should feel natural and speech-like, not scripted.
-- Most sentences should remain fluent or near-fluent.
-- Apply dysfluencies sparingly — only introduce occasional hesitations, fillers (uh, um), or light circumlocution on lexically demanding words.
-- Do not break sentence structure. Sentences should still read as grammatically complete.
+  0: """Constraints
+- Do not introduce phoneme-level changes or sound-based spellings.
+- Do not invent new content; keep the same events and details.
+- Preserve overall meaning; allow only light local vagueness when a specific word is hard.
+- Dysfluencies must be natural, not patterned or repetitive.
+- Most sentences remain fluent or near-fluent.
+- Apply dysfluency mainly at a few high-lexical-load targets (specific nouns/verbs, proper nouns).
+- Per sentence: at most 1 dysfluency event (e.g., one filler, one brief repair, or one placeholder).
+- Keep grammar and sentence structure intact; no clause abandonment.
+- Prefer: brief filler OR single cut-and-repair; avoid stacking types.
 - Severity should be mild overall.""",
 
-    1: """Constraints
-- Do not introduce phoneme-level changes.
-- Do not invent new content unrelated to the original meaning.
-- Maintain approximate semantic intent, but allow vagueness and imprecision.
-- Dysfluencies should feel natural and speech-like, not scripted.
-- Not every sentence must be dysfluent.
-- Severity should be moderate unless the sentence is long or lexically demanding.
-- Introduce frequent restarts, reformulations, and semantic substitutions ("thing", "stuff", "that one").
-- Some sentences may be restructured or simplified due to planning difficulty.""",
+  1: """Constraints
+- Do not introduce phoneme-level changes or sound-based spellings.
+- Do not invent new content; keep the same events and details.
+- Preserve overall meaning but allow noticeable local imprecision around hard content words.
+- Dysfluencies must remain natural; vary fillers and repair phrasing (no repeated signature pattern).
+- Dysfluency should be present in a substantial portion of sentences (roughly 40–70%), concentrated around lexical targets.
+- Increase use of lvPPA operators: placeholder substitution, brief circumlocution, semantic near-miss, and cut-and-repair.
+- Allow stacking of up to 2 dysfluency events within a single sentence when a lexical target is difficult (e.g., filler + repair, or repetition + placeholder).
+- Working-memory strain should be visible: simplify some long sentences by splitting or dropping subordinate clauses, but keep the main thread.
+- Allow occasional partial restarts and reformulations, but they should usually resolve to a coherent continuation (no long stalls).
+- Severity should be moderate overall.""",
 
-    2: """Constraints
-- Do not introduce phoneme-level changes.
-- Do not invent new content unrelated to the original meaning.
-- Maintain approximate semantic intent, but allow heavy vagueness and imprecision.
-- Dysfluencies should feel natural and speech-like, not scripted.
-- Apply heavy dysfluency throughout — most sentences should show significant breakdown.
-- Abandoned clauses, heavy circumlocution, and near-telegraphic output are expected.
-- Sentence structure may collapse entirely; multiple dysfluency types should co-occur within a single utterance.
-- Semantic substitutions should be frequent ("thing", "that stuff", "the one that does the…").
+  2: """Constraints
+- Do not introduce phoneme-level changes or sound-based spellings.
+- Do not invent new content; keep the same core events, but many specifics may become vague or inaccessible.
+- Heavy retrieval failure throughout: the majority of sentences (roughly 75–95%) should show clear word-finding breakdown.
+- Frequent placeholders and circumlocutions for nouns/verbs; semantic near-misses common.
+- Allow frequent cut-and-repair, repetitions, and partial restarts; allow stacking of 2–4 dysfluency events within difficult sentences.
+- Working-memory limits dominate: aggressively simplify long sentences; frequent sentence splitting; drop embedded clauses; occasional abandoned clauses are allowed.
+- Output may become fragmented, but should still be interpretable as the same story (avoid random drift).
+- Avoid long filler chains; the breakdown should be driven by missing content words, not nonstop fillers.
 - Severity should be high throughout.""",
 }
 
 _L1_TEMPLATE = """
 Role
-You are a word-level dysfluency planner for simulating connected speech in a {severity_label}-severity logopenic variant Primary Progressive Aphasia (lvPPA) patient.
-Your task is to transform ground-truth fluent sentences into word-level dysfluent text, capturing disruptions in lexical access, working memory, and utterance planning.
-You operate only at the word level — do not modify phonemes or IPA.
+You are a word-level transformation module for simulating connected speech in a {severity_label}-severity logopenic variant Primary Progressive Aphasia (lvPPA) patient.
+You receive fluent paragraph-level monologue text produced by an upstream generator and must rewrite it into a dysfluent version by applying lvPPA-typical word retrieval and verbal working-memory disruptions.
+Operate only at the word/phrase level — do not modify phonemes, spelling-as-sound, or IPA.
+
 
 Input
-reference_text: Fluent ground-truth text (multiple sentences)
+reference_text: fluent monologue text (typically 1–2 paragraphs) produced upstream.
+Treat it as the complete intended content.
 
 
 Output
-Output only the simulated dysfluent text. No ellipses, just plain text.
-
-What You Are Simulating:
-You are simulating word-level instability in connected speech, including but not limited to:
-- Lexical retrieval difficulty
-
-- Working memory strain
-
-- Utterance planning breakdown
+Output only the dysfluent rewritten text as plain text.
+- Preserve paragraph breaks unless breakdown forces a split.
+Hard bans:
+- No transcription codes or annotations.
+- No paralinguistic markers.
+- No ellipses (“...”).
+- No phoneme-level spellings or sound-like distortions.
 
 
-These may manifest as:
-- False starts and restarts
+Transformation Objective
+Rewrite the input so it still describes the same events with approximately the same meaning, but with lvPPA-like:
+1) Lexical access failures (especially nouns/verbs and specific content words)
+2) Repair strategies (substitution, placeholders, circumlocution)
+3) Working-memory strain (simplification of long multi-clause sentences)
 
-- Reformulations
-
-- Circumlocutory phrasing
-
-- Simplification
-
-- Hesitations
-
-- Word-level dysfluencies
-
-You are not required to preserve original sentence structure if breakdown occurs.
-
-Allowed Word-Level Dysfluencies
- You may introduce word-level disruptions such as:
-Word insertions
- (e.g., fillers like "uh", "um", "you know", vague placeholders)
- Example: "I went to the, uh, the office and, you know, talked to the manager."
+Not simulating: slurring, phonetic errors, or primarily grammar-driven agrammatism.
 
 
-Word repetitions
- (repeating full words or short phrases)
- Example: "I need to call my friend—my friend—about tomorrow."
+Transformation Rules (apply locally; don’t rewrite the entire voice)
+- Identify high-lexical-load targets in the input (specific nouns/verbs, proper nouns, rare descriptors, multi-step actions).
+- Concentrate dysfluency around those targets rather than distributing it uniformly.
+- When a target is difficult, prefer: brief stall → repair (placeholder/circumlocution/near-miss) → continue.
+- Keep discourse structure mostly intact; do not add new sections, framing, or summaries that weren’t present.
 
 
-Word deletions / truncations
- (dropping intended words or abandoning a clause)
- Example: "I was going to explain why it happened, but… never mind."
+Allowed Word-Level Operations (rewrite operators)
+A) Brief filler insertion: insert 1–2 short fillers near a hard word, then continue.
+B) Local repetition: repeat a word/short phrase once, then proceed.
+C) Cut-and-repair: interrupt and replace with a more accessible alternative using punctuation (e.g., “X—Y”, “X, I mean Y”).
+D) Generic placeholder substitution: replace a hard content word with a vague substitute while keeping coherence.
+E) Brief circumlocution: replace a hard word with a short description of its function/feature.
+F) Semantic near-miss: replace with a related plausible word from the same category.
+G) Working-memory simplification: split long sentences, reduce embeddings, and drop subordinate clauses; preserve the main thread.
+H) Rare short retrieval comment (optional): a single short clause indicating difficulty.
+
+Avoid:
+- Long filler chains that replace content.
+- Random topic drift not supported by the reference.
+- Overly consistent repeated filler/repair phrasing.
 
 
-Word substitutions
- (vague or semantically related words, e.g., "thing", "stuff", "machine")
- Example: "Can you pass me that thing—the metal thing that opens bottles?"
-
-
-Restarts / false starts
- (beginning an utterance, stopping, and restarting)
- Example: "I think we should—no, wait—let's do it after lunch."
-
-
-Circumlocutory expansions
- (describing instead of naming)
- Example: "I used the tool that you plug in and it makes the room cold—the one with the vents."
-
+No-Invention Constraints
+- Do not add new facts, settings, people, places, or events.
+- Do not add evaluative commentary that wasn’t present in the reference_text.
+- Do not remove key events entirely; if a clause is abandoned, express the key meaning elsewhere in simpler form.
 
 
 {severity_constraints}
 
 
-lvPPA-Specific Planning Principles
-- Content words (nouns, verbs) are more vulnerable than function words
-
-- Longer or syntactically complex sentences are more likely to break down
-
-- Sentence-medial positions are higher risk than sentence onsets
-
-- Dysfluencies may cluster within a sentence
-
-- Reduced efficiency (shorter clauses, simpler phrasing) is common
-
-
-
 Important
 Your output is input to a downstream phoneme-level dysfluency system.
-Do not attempt to "sound dysfluent" phonetically — only plan dysfluency at the word level.
+Do not introduce phoneme-level effects or “sound-based” spellings.
 """
 
 
