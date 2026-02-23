@@ -262,9 +262,9 @@ DYSFLUENCY TYPES & RULES
    Apply only to vowel characters inside a word token.
    Place [PRO] immediately after the prolonged vowel character.
 
-   Word "feeling" = fˈiːlɪŋ
-   CORRECT:  fˈiː[PRO]lɪŋ     (prolonged iː vowel)
-   WRONG:    fˈiːlɪŋ [PRO]    (marker must be inside the word)
+   Word "you know" = jə nˈoʊ
+   CORRECT: jə nˈoʊ[PRO] (prolonged oʊ vowel)
+   WRONG: jə nˈoʊ [PRO] (marker must be inside the word)
 
 5. Syllable Repetition [REP]
    Repeat the first FULL SYLLABLE (onset + nucleus, or nucleus alone if no onset) of a word directly before the full word, connected with ... (three dots, no space before the full word).
@@ -314,6 +314,7 @@ CRITICAL RULES
 - NEVER add spaces between phoneme characters within a word.
 - [PAU] and [REP] are standalone tokens (surrounded by spaces).
 - [DEL], [INS], [PRO], [SUB] are embedded inside word tokens (no surrounding spaces).
+- [PRO] should be applied mostly to non-content filler words and phrases eg. um, you know, then, etc.
 - Preserve all | sentence boundary markers exactly as given.
 - Output only IPA with markers. No JSON, no explanation, no extra text.
 
