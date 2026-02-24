@@ -38,6 +38,6 @@ def run_vits(phoneme_path: str, output_path: str, speaker_id: int = 0):
 
 
 if __name__ == "__main__":
-    phoneme_file = 
+    phoneme_file = None
     out_file = "test_output.wav"
     run_vits(phoneme_file, out_file)

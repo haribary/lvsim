@@ -27,7 +27,7 @@ def phonemize_text(text, language='en-us'):
             language=language,
             backend='espeak',
             strip=True,
-            preserve_punctuation=False,
+            preserve_punctuation=True,
             with_stress=True,
         )
         ipa = re.sub(r'\s+', ' ', ipa).strip()

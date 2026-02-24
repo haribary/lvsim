@@ -10,149 +10,110 @@ Severity levels:
 
 _L1_SEVERITY_CONSTRAINTS = {
     0: """Constraints
-- Do not introduce phoneme-level changes.
+- Do not modify phonemes or introduce phonological errors — this is handled downstream.
 - Do not invent new content unrelated to the original meaning.
-- Maintain approximate semantic intent, but allow vagueness and imprecision.
-- Dysfluencies should feel natural and speech-like, not scripted.
-- Most sentences should remain fluent or near-fluent.
-- Apply dysfluencies sparingly — only introduce occasional hesitations, fillers (uh, um), or light circumlocution on lexically demanding words.
-- Retrieval failures should be brief and quickly resolved — the speaker finds the word after a short delay or one restart.
-- Metacognitive comments (e.g., "what's the word") should be rare or absent.
-- Do not break sentence structure. Sentences should still read as grammatically complete.
-- Severity should be mild overall.""",
+- Maintain semantic intent; allow occasional vagueness caused by failed word retrieval.
+- Dysfluencies must feel natural and spontaneous, not scripted.
+- Speech is mostly fluent and grammatically intact throughout.
+- The dominant feature is anomia: occasional retrieval failures on specific content words, especially lower-frequency nouns and proper names.
+- At a retrieval failure site, the speaker typically:
+  (a) Stalls briefly with a filled pause ("uh", "um"), then retrieves the target word and continues.
+  (b) Produces a brief circumlocution — a short descriptive phrase — then either finds the word or moves on.
+      Example: "We went to the, the place where you look at the paintings — the gallery."
+  (c) Substitutes a closely related word and continues without noticing or correcting.
+      Example: using "walk" instead of "hike", or "bag" instead of "pack".
+- Circumlocutions should appear at roughly a third of failure sites; filled pauses alone can handle the rest.
+- Circumlocution, when it occurs, is brief and resolving — one attempt, then the speaker continues the sentence.
+- Sentences remain grammatically complete; the speaker does not lose the syntactic thread.
+- Restarts are rare and brief — at most one restart per passage, triggered by a mid-sentence retrieval failure.
+- Self-monitoring is intact: the speaker notices failures and self-corrects or acknowledges briefly.
+- Severity should be mild overall — a listener might interpret dysfluencies as normal tip-of-the-tongue states.""",
 
     1: """Constraints
-- Do not introduce phoneme-level changes.
+- Do not modify phonemes or introduce phonological errors — this is handled downstream.
 - Do not invent new content unrelated to the original meaning.
-- Maintain approximate semantic intent, but allow vagueness and imprecision.
-- Dysfluencies should feel natural and speech-like, not scripted.
-- Not every sentence must be dysfluent, but most lexically demanding sentences should show some breakdown.
-- Severity should be moderate unless the sentence is short and syntactically simple.
-- Retrieval failures should sometimes cascade: a failed retrieval on one word destabilizes the rest of the utterance, causing restarts, abandoned clauses, or simplified re-attempts.
-- The speaker may circle back to the same clause multiple times, each time getting slightly closer or giving up and simplifying.
-- Introduce frequent restarts, reformulations, and semantic substitutions ("thing", "stuff", "that one", "the one that...").
-- Metacognitive comments should appear occasionally (e.g., "I know what I mean", "what do you call it").
-- Some sentences may be restructured or simplified due to planning difficulty.
-- Abandoned utterances are allowed — the speaker may trail off and start a new thought.""",
+- Maintain approximate semantic intent; vagueness is acceptable when word retrieval fails.
+- Dysfluencies must feel natural and spontaneous, not scripted.
+- Anomia is frequent and affects a wide range of content words, not just rare ones.
+- At retrieval failure sites, the speaker uses a MIX of strategies — not just filled pauses. Roughly:
+  - About a third of failures resolve with circumlocution or vague substitution: the speaker describes the missing word or uses a placeholder ("the thing", "that place", "the one").
+      Example: "We drove to the, the really tall one with the snow, Mount Cook."
+      Example: "We did the thing, the outdoor thing, for a few days."
+  - About a third resolve with filled pauses and eventual retrieval: the speaker stalls ("uh", "um"), then finds the word.
+  - The remaining third involve restarts or reformulations: the speaker starts a clause, stalls, and restarts with a different or simpler structure.
+      Example: "The scenery was absolutely, it was, the views were really nice."
+      Example: "She was going to the, she went to, she was at the market."
+- Filled pauses ("uh", "um") and word repetitions cluster at retrieval failure sites — just before the failing content word.
+- Phonological working memory failures appear: the speaker begins a sentence, loses the syntactic thread mid-clause due to a retrieval delay, and must restart the clause from an earlier anchor point.
+- The speaker may attempt the same clause 2-3 times, each attempt slightly different, before resolving or simplifying.
+- Longer and syntactically complex sentences are more likely to break down; the speaker may simplify to a shorter, easier structure after a failed attempt.
+- Abandoned clauses are permitted: the speaker may trail off when a sentence plan collapses, then begin a new, simpler attempt.
+- Grammar remains largely intact within completed phrases; agrammatism is absent.
+- Self-monitoring is preserved: the speaker shows awareness of failures through hesitation, restarts, or brief comments ("what's the word", "you know what I mean").
+- Metacognitive comments should appear naturally, roughly 1-3 times per passage.
+- Severity should be moderate throughout.""",
 
     2: """Constraints
-- Do not introduce phoneme-level changes.
-- Do not invent new content unrelated to the original meaning.
-- Maintain approximate semantic intent, but allow heavy vagueness and imprecision.
-- Dysfluencies should feel natural and speech-like, not scripted.
-- Apply heavy dysfluency throughout — most sentences should show significant breakdown.
-- Retrieval failures should frequently cascade: one failed word derails the entire utterance plan, causing the speaker to restart the same clause multiple times, each attempt slightly different, often abandoning and restarting from scratch.
-- "Revolving door" restarts are expected — the speaker loops through the same clause 2-4 times before resolving or abandoning it entirely.
-- Metacognitive frustration should surface regularly (e.g., "I know what I wanna say but...", "what's the—you know what I mean", "the word won't come").
-- Abandoned clauses, heavy circumlocution, and near-telegraphic output are expected.
-- Sentence structure may collapse entirely; multiple dysfluency types should co-occur within a single utterance.
-- Semantic substitutions should be frequent ("thing", "that stuff", "the one that does the…", "type of thing").
-- Temporal and sequential confusion may appear — the speaker may lose track of the order of events or mix up details.
-- The speaker may insert filler phrases to hold conversational ground while searching for words (e.g., "and uh... and uh...").
+- Do not modify phonemes or introduce phonological errors — this is handled downstream.
+- Do not invent new content unrelated to the original meaning, but semantic drift is acceptable as the speaker loses the sentence frame.
+- Maintain approximate semantic intent; significant information loss due to communicative breakdown is expected.
+- Dysfluencies must feel natural and spontaneous, not scripted.
+- Output is sparse: mostly single content words, short noun phrases, or deictic references ("here", "this one", "the kids").
+- Full sentences are rare; when attempted, they are simple structures and frequently abandoned before completion.
+- Severe anomia affects most content words. At failure sites, the speaker frequently:
+  (a) Substitutes vague placeholders because the target word simply won't come ("that thing", "the one", "the place", "over there").
+  (b) Attempts circumlocution but the circumlocution itself stalls or drifts before resolving.
+      Example (target: "glacier"): "the big, the cold, the, you know, the ice thing up on the, anyway."
+  (c) Abandons the clause entirely and moves on, sometimes with a brief marker ("anyway", "I don't know").
+  (d) Cycles through the same clause 2-3 times, each attempt fragmentary and slightly different, before abandoning.
+      Example: "We went to the, we were at, we did the, anyway, the mountains."
+- Phonological working memory is severely impaired: even short sentences collapse mid-clause. The speaker cannot hold the sentence frame during a retrieval delay.
+  - Sentence plan loss may produce a contextually plausible but structurally unrelated output.
+  - Example (target: "It's not raining outside today"): speaker produces "but it's going to be bad here."
+- Filler stalling is present: the speaker uses repeated fillers to hold conversational ground while searching ("and uh, and uh, well,"), but the more prominent feature is the vague, fragmented quality of the speech itself.
+- Self-monitoring is reduced but present: the speaker may show awareness through laughter, brief self-interruption, or a short comment before moving on.
+- The overall word count should be significantly reduced compared to the input — information is lost because the speaker cannot retrieve the words needed to convey it.
 - Severity should be high throughout.""",
 }
 
-_L1_TEMPLATE = """
-Role
-You are a word-level dysfluency planner for simulating connected speech in a {severity_label}-severity logopenic variant Primary Progressive Aphasia (lvPPA) patient.
-Your task is to transform ground-truth fluent sentences into word-level dysfluent text, capturing disruptions in lexical access, working memory, and utterance planning.
-You operate only at the word level — do not modify phonemes or IPA.
+_L1_TEMPLATE = """Role
+You are a word-level dysfluency planner simulating connected speech in a {severity_label}-severity lvPPA (logopenic variant Primary Progressive Aphasia) patient.
+Transform fluent input text into word-level dysfluent text. Do not modify phonemes — phonological errors are handled downstream.
 
-Input
-reference_text: Fluent ground-truth text (multiple sentences)
+Core deficit
+lvPPA disrupts lexical retrieval during connected speech. The speaker knows what they want to say but cannot retrieve the specific words in time. Retrieval failures cascade:
+- The speaker stalls with fillers ("uh", "um") while searching for a word.
+- If retrieval fails, they circumlocute (describe the word), substitute a vague placeholder, or abandon the clause.
+- The retrieval delay consumes phonological working memory, causing loss of the sentence plan.
+- This forces restarts from an earlier anchor — sometimes multiple times, each attempt slightly different.
+- Longer, syntactically complex sentences are more vulnerable.
 
+The observable speech pattern is a MIX of these strategies: filled pauses during search, circumlocutions and vague substitutions when retrieval fails, and restarts when the sentence plan collapses. All of these should be present in the output — not just one type.
 
-Output
-Output only the simulated dysfluent text. No ellipses, just plain text.
+Dysfluency types (word-level only)
+- Filled pauses: uh, um, you know — inserted before or during search for a failing content word
+- Circumlocution: description instead of target word ("the thing you plug in that makes the room cold")
+- Vague substitution: placeholder when target won't come ("that thing", "the one", "the place")
+- Word repetitions: re-anchoring after a retrieval delay ("my friend, my friend, about tomorrow")
+- Restarts / false starts: clause abandoned and restarted ("she was going to the, she went to, she was at the market")
+- Reformulations: failed complex structure replaced with simpler one
+- Abandoned utterances: clause dropped when sentence plan is lost ("and then she was going to, anyway")
+- Metacognitive comments: speaker acknowledges failure ("what's the word", "I know what I mean")
+- Filler stalling: repeated fillers to hold conversational ground ("and uh, and uh, well,")
 
-What You Are Simulating:
-You are simulating word-level instability in connected speech caused by lexical retrieval failure and its downstream effects. In lvPPA, the core deficit is difficulty accessing words during speech. This is NOT a grammar or comprehension problem — the speaker knows what they want to say but cannot retrieve the words in time. When a word fails to come, the consequences cascade:
-
-- The speaker stalls, fills time with hesitations, and searches for the word.
-- If the word still doesn't come, they may try a vaguer substitute, describe it instead of naming it, or abandon the attempt entirely.
-- The delay and cognitive effort of searching for one word disrupts working memory, causing the speaker to lose track of the sentence they were building.
-- This forces restarts — the speaker goes back to the beginning of the clause and tries again, sometimes multiple times.
-- Each restart may differ slightly as the speaker tries a new route to the same idea.
-- Longer and more complex sentences are more likely to collapse because they place greater demands on working memory during the retrieval delays.
-
-These cascading failures are the hallmark of lvPPA connected speech. The dysfluencies are not random — they are consequences of retrieval breakdowns propagating through the utterance plan.
-
-
-These may manifest as:
-- Hesitations and filled pauses (uh, um) while searching for a word
-- False starts and restarts — beginning an utterance, failing to retrieve a word, and restarting from earlier in the clause
-- Revolving-door restarts — cycling through the same clause multiple times, each attempt slightly different
-- Reformulations — switching to a simpler sentence structure after a complex one fails
-- Circumlocutory phrasing — describing a word instead of naming it ("the thing you use to... you know, the...")
-- Semantic substitutions — using a vaguer or related word when the target won't come ("thing", "stuff", "the one")
-- Abandoned utterances — trailing off when retrieval fails completely and the sentence plan is lost
-- Metacognitive comments — the speaker acknowledges the difficulty ("I know what I mean", "what's the word", "it won't come")
-- Filler stalling — using repeated fillers to hold conversational ground while searching ("and uh... and uh...")
-
-You are not required to preserve original sentence structure if breakdown occurs.
-
-Allowed Word-Level Dysfluencies
- You may introduce word-level disruptions such as:
-Word insertions
- (e.g., fillers like "uh", "um", "you know", vague placeholders)
- Example: "I went to the, uh, the office and, you know, talked to the manager."
-
-
-Word repetitions
- (repeating full words or short phrases as the speaker re-anchors after a retrieval delay)
- Example: "I need to call my friend—my friend—about tomorrow."
-
-
-Word deletions / truncations
- (dropping intended words or abandoning a clause when retrieval fails)
- Example: "I was going to explain why it— never mind."
-
-
-Word substitutions
- (vague or semantically related words when the target word won't come)
- Example: "Can you pass me that thing—the metal thing that opens bottles?"
-
-
-Restarts / false starts
- (beginning an utterance, failing to retrieve a word, backing up and restarting — possibly multiple times)
- Example: "I think we should—no, wait—let's do it after lunch."
- Example (revolving-door): "She had to go—uh, be there at—she had to—she had to go at twelve o'clock."
-
-
-Circumlocutory expansions
- (describing instead of naming when the word won't come)
- Example: "I used the—the thing that you plug in and it makes the room cold—the one with the vents."
-
-
-Abandoned utterances
- (trailing off when retrieval failure causes complete loss of the sentence plan)
- Example: "And then she was going to—uh—I know what I mean but—anyway, so then they left."
-
-
-Metacognitive comments
- (the speaker acknowledges their retrieval difficulty)
- Example: "It's the—what do you call it—the thing on the wall."
- Example: "I know what I wanna say but I can't get it out."
-
+Planning rules
+- Content words (nouns, verbs) are the primary failure sites; function words are largely spared.
+- Sentence-medial positions are highest risk — the speaker has committed to a structure but cannot retrieve the next word.
+- Dysfluencies cluster at retrieval failure sites; they are not randomly distributed.
+- A single retrieval failure often destabilizes the whole utterance.
+- Use a VARIETY of dysfluency types across the passage. The output should not be dominated by any single type.
+- Shorter, simpler output is a compensatory strategy, not a primary deficit.
+- Semantic knowledge is intact — circumlocutions are accurate even when the target word is unavailable.
 
 {severity_constraints}
 
-
-lvPPA-Specific Planning Principles
-- Content words (nouns, verbs) are the primary targets of retrieval failure — function words are largely spared.
-- A single retrieval failure often destabilizes the entire utterance, causing cascading restarts and reformulations.
-- Longer or syntactically complex sentences are more likely to break down because retrieval delays overload working memory.
-- Sentence-medial positions are higher risk than sentence onsets — the speaker has committed to a structure but cannot retrieve the next content word.
-- Dysfluencies cluster around retrieval failure sites — they are not randomly distributed.
-- Reduced efficiency (shorter clauses, simpler phrasing) emerges as a compensatory strategy, not a primary deficit.
-- The speaker retains awareness of their difficulty and may comment on it or show frustration.
-- The speaker's semantic knowledge is intact — circumlocutions and descriptions are accurate even when the target word won't come.
-
-
-Important
-Your output is input to a downstream phoneme-level dysfluency system.
-Do not attempt to "sound dysfluent" phonetically — only plan dysfluency at the word level.
-"""
+Output
+Output only the simulated dysfluent text. No ellipses, use commas instead. Plain text only."""
 
 
 # ── L2: Phoneme-level severity inserts ─────────────────────────────────────
@@ -315,6 +276,7 @@ CRITICAL RULES
 - [PAU] and [REP] are standalone tokens (surrounded by spaces).
 - [DEL], [INS], [PRO], [SUB] are embedded inside word tokens (no surrounding spaces).
 - [PRO] should be applied mostly to non-content filler words and phrases eg. um, you know, then, etc.
+- [PAU] should be applied most frequently before content words, since pausing is supposed to represent difficulty with lexical retrieval
 - Preserve all | sentence boundary markers exactly as given.
 - Output only IPA with markers. No JSON, no explanation, no extra text.
 

@@ -36,7 +36,7 @@ word_dys = response_l1.text.replace("...", "")
 print(word_dys)
 
 # save word-level output
-word_path = os.path.join(OUT_DIR, f"test_word_{label}_p{prompt_idx}.txt")
+word_path = os.path.join(OUT_DIR, f"word_{label}_p{prompt_idx}.txt")
 with open(word_path, "w", encoding="utf-8") as f:
     f.write(word_dys)
 print(f"  Wrote word-level  -> {word_path}")
@@ -63,7 +63,7 @@ print('___OUT___')
 print(dysfluent_ipa)
 
 # save phoneme-level output
-ipa_path = os.path.join(OUT_DIR, f"test_phone_{label}_p{prompt_idx}.txt")
+ipa_path = os.path.join(OUT_DIR, f"phone_{label}_p{prompt_idx}.txt")
 with open(ipa_path, "w", encoding="utf-8") as f:
     f.write(dysfluent_ipa + "\n")
 print(f"  Wrote phoneme-level -> {ipa_path}")
