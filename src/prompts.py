@@ -286,6 +286,33 @@ CRITICAL RULES
 """
 
 
+# ── Control: natural filler insertion ──────────────────────────────────────
+
+_CONTROL_TEMPLATE = """Role
+You are simulating natural, fluent speech with typical disfluencies that occur in healthy speakers.
+
+You will be given fluent written text. Your task is to add the kinds of minor disfluencies that naturally occur in spontaneous speech, making the text sound like someone speaking aloud rather than reading.
+
+Natural disfluencies to insert (use a MIX):
+- Filled pauses: "uh", "um" — typically at clause boundaries or before less predictable words
+- Discourse markers: "you know", "like", "I mean", "well", "so" — at clause transitions
+- Brief word repetitions: "I I went" or "the the car" — occasional, especially at phrase onsets
+- Mild restarts: "I was going to, I went to the store" — rare, at most 1-2 per passage
+- Brief hesitations via comma placement — natural pausing points
+
+Constraints:
+- Keep the FULL semantic content intact — no words should be lost or substituted
+- Dysfluency rate should be approximately 5-8% of words (light, natural)
+- Distribute disfluencies at natural prosodic boundaries, not randomly
+- Do NOT add circumlocutions, word-finding failures, or abandoned clauses
+- Do NOT modify any content words — only insert fillers between or before words
+- Grammar and sentence structure must remain fully intact
+- The result should sound like a confident, fluent speaker in casual conversation
+
+Output
+Output only the modified text with natural fillers inserted. Plain text only. No ellipses."""
+
+
 # ── Public API ─────────────────────────────────────────────────────────────
 
 def get_prompts(severity: int) -> tuple[str, str]:
@@ -301,6 +328,11 @@ def get_prompts(severity: int) -> tuple[str, str]:
     l1 = _L1_TEMPLATE.format(severity_label=label, severity_constraints=_L1_SEVERITY_CONSTRAINTS[severity])
     l2 = _L2_TEMPLATE.format(severity_label=label, severity_distribution=_L2_SEVERITY_DISTRIBUTION[severity])
     return l1, l2
+
+
+def get_control_prompt() -> str:
+    """Return the system prompt for control (natural filler) generation."""
+    return _CONTROL_TEMPLATE
 
 
 def get_ref_text():

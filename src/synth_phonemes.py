@@ -11,11 +11,16 @@ Dysfluency markers handled:
     [INS]  insertion     — stripped (inserted phone already in stream)
     [REP]  repetition    — stripped (the preceding ... already signals repetition)
     ...                  — kept as … (pause / repetition ellipsis)
-    |      sentence boundary — chunk split point with inter-sentence silence
+    |      sentence boundary — chunk split point; each chunk becomes a separate WAV
 
-Usage:
-    python3 synth_phonemes.py phonemes.txt [output.wav] [--speaker N]
-    python3 synth_phonemes.py -                          # read from stdin
+Usage (CLI, still works):
+    python3 synth_phonemes.py phonemes.txt [output_dir] [--speaker N]
+
+Programmatic usage:
+    from synth_phonemes import load_model, synthesize_sentences
+    model, hps = load_model(device)
+    results = synthesize_sentences(model, hps, raw_ipa, speaker_id, device)
+    # results: list of (audio_np_array, duration_sec, chunk_ipa, metadata_dict)
 """
 
 import os
@@ -23,6 +28,7 @@ import sys
 import re
 import random
 import argparse
+import csv
 
 # Add the vits/ directory to sys.path so that bare imports used by vits
 # internals (e.g. `import commons`, `import modules`) resolve correctly.
@@ -81,26 +87,13 @@ _VALID = set(symbols)
 # Marker / token normalisation
 # ---------------------------------------------------------------------------
 
-# Dysfluency markers to remove outright (DEL, INS, REP only).
-# [PAU] and [PRO] are preserved for synthesis-time handling.
-_STRIP_MARKERS = re.compile(r'\[(DEL|INS|REP)\]')
+_STRIP_MARKERS = re.compile(r'\[(DEL|INS|REP|SUB)\]')
+_ALL_MARKERS = re.compile(r'\[(PRO|PAU|DEL|INS|REP|SUB)\]')
 
 def preprocess_ipa(raw: str) -> str:
-    """Normalise an IPA string, keeping [PAU] and [PRO] markers for synthesis.
-
-    Rules:
-      [PAU]  → kept (synthesis splits here and inserts silence)
-      [PRO]  → kept (synthesis extends phoneme duration)
-      [DEL]  → (removed)
-      [INS]  → (removed)
-      [REP]  → (removed)
-      ...    → … (three ASCII dots → Unicode ellipsis)
-    """
-    # strip DEL, INS, REP markers
+    """Normalise an IPA string, keeping [PAU] and [PRO] markers for synthesis."""
     s = _STRIP_MARKERS.sub("", raw)
-    # three ASCII dots → ellipsis (for repetition constructs)
     s = s.replace("...", PAUSE_CHAR)
-    # collapse runs of whitespace left by removed markers
     s = re.sub(r' +', ' ', s).strip()
     return s
 
@@ -109,16 +102,27 @@ def filter_to_valid(s: str) -> str:
     """Drop any character not in the VITS symbol table."""
     return "".join(c for c in s if c in _VALID)
 
+
+def count_markers(raw: str) -> dict:
+    """Count dysfluency markers in raw IPA string."""
+    markers = _ALL_MARKERS.findall(raw)
+    counts = {"PRO": 0, "PAU": 0, "DEL": 0, "INS": 0, "REP": 0, "SUB": 0}
+    for m in markers:
+        counts[m] += 1
+    return counts
+
+
+def count_phonemes(ipa: str) -> int:
+    """Count valid phoneme symbols in an IPA string (excluding markers)."""
+    cleaned = _ALL_MARKERS.sub("", ipa)
+    return sum(1 for c in cleaned if c in _symbol_to_id)
+
 # ---------------------------------------------------------------------------
 # Chunk splitting  (split on | sentence boundaries)
 # ---------------------------------------------------------------------------
 
 def split_into_chunks(ipa: str) -> list[str]:
-    """Split the full IPA string at '|' sentence boundaries.
-
-    [PAU] and [PRO] markers are preserved for synthesis-time handling.
-    filter_to_valid is deferred until after marker parsing in synthesize_chunk.
-    """
+    """Split the full IPA string at '|' sentence boundaries."""
     raw_chunks = ipa.split("|")
     chunks = []
     for raw in raw_chunks:
@@ -145,24 +149,17 @@ def load_model(device: torch.device):
     utils.load_checkpoint(CHECKPOINT_PATH, net_g, None)
     return net_g, hps
 
-
 # ---------------------------------------------------------------------------
 # [PRO] marker parsing
 # ---------------------------------------------------------------------------
 
 def parse_pro_markers(chunk: str) -> tuple[str, list[int]]:
-    """Extract [PRO] markers and return clean IPA with prolongation positions.
-
-    Returns:
-        clean: chunk with [PRO] stripped
-        pro_char_indices: character indices (in clean) of the phonemes to prolong
-    """
+    """Extract [PRO] markers and return clean IPA with prolongation positions."""
     pro_indices = []
     clean = ""
     i = 0
     while i < len(chunk):
         if chunk[i:i+5] == "[PRO]":
-            # The phoneme to prolong is the last valid symbol char added
             for j in range(len(clean) - 1, -1, -1):
                 if clean[j] in _symbol_to_id:
                     pro_indices.append(j)
@@ -175,12 +172,7 @@ def parse_pro_markers(chunk: str) -> tuple[str, list[int]]:
 
 
 def text_to_sequence_with_pro(phonemes: str, pro_char_indices: list[int]) -> tuple[list[int], list[int]]:
-    """Convert IPA to symbol IDs, mapping prolongation char positions to ID positions.
-
-    Characters not in the symbol table are skipped (same as filter_to_valid +
-    text_to_sequence_phn in one pass), and the pro indices are remapped to
-    account for any skipped characters.
-    """
+    """Convert IPA to symbol IDs, mapping prolongation char positions to ID positions."""
     pro_set = set(pro_char_indices)
     ids = []
     pro_id_indices = []
@@ -218,11 +210,7 @@ def _synthesize_with_prolongation(model, hps, ids: list[int],
                                   pro_id_indices: list[int],
                                   speaker_id: int, device: torch.device,
                                   length_scale: float) -> np.ndarray:
-    """VITS inference with duration extension at prolongation positions.
-
-    Inlines the model.infer() logic so we can modify w_ceil (the per-phoneme
-    duration in mel frames) before the decoder runs.
-    """
+    """VITS inference with duration extension at prolongation positions."""
     add_blank = getattr(hps.data, "add_blank", True)
     sr = hps.data.sampling_rate
     hop_length = hps.data.hop_length
@@ -238,13 +226,9 @@ def _synthesize_with_prolongation(model, hps, ids: list[int],
     sid = torch.LongTensor([speaker_id]).to(device)
 
     with torch.no_grad():
-        # --- text encoder ---
         x_enc, m_p, logs_p, x_mask = model.enc_p(x, x_lengths)
-
-        # --- speaker embedding ---
         g = model.emb_g(sid).unsqueeze(-1) if model.n_speakers > 0 else None
 
-        # --- duration prediction ---
         if model.use_sdp:
             logw = model.dp(x_enc, x_mask, g=g, reverse=True, noise_scale=0.6)
         else:
@@ -252,14 +236,12 @@ def _synthesize_with_prolongation(model, hps, ids: list[int],
         w = torch.exp(logw) * x_mask * length_scale
         w_ceil = torch.ceil(w)
 
-        # --- PROLONGATION: extend duration at marked positions ---
         for idx in pro_interspersed:
             if idx < w_ceil.shape[2]:
                 extra_secs = random.uniform(*PRO_SECS_RANGE)
                 extra_frames = int(extra_secs * sr / hop_length)
                 w_ceil[0, 0, idx] += extra_frames
 
-        # --- alignment + decoder (rest of model.infer) ---
         y_lengths = torch.clamp_min(torch.sum(w_ceil, [1, 2]), 1).long()
         y_mask = torch.unsqueeze(
             commons.sequence_mask(y_lengths, None), 1
@@ -282,16 +264,15 @@ def _synthesize_with_prolongation(model, hps, ids: list[int],
 # ---------------------------------------------------------------------------
 
 def synthesize_chunk(model, hps, chunk: str, speaker_id: int,
-                     device: torch.device) -> np.ndarray:
+                     device: torch.device) -> tuple[np.ndarray, float]:
     """Synthesize one sentence chunk, handling [PAU] and [PRO] markers.
 
-    [PAU]  — splits synthesis here and inserts 0.3-1.5s silence.
-    [PRO]  — extends the preceding phoneme's duration inside VITS.
+    Returns:
+        (audio_array, length_scale)
     """
     sr = hps.data.sampling_rate
-    length_scale = random.uniform(1.2, 1.5)  # consistent within the chunk
+    length_scale = random.uniform(1.2, 1.5)
 
-    # Split on [PAU] → sub-chunks with silence between them
     sub_chunks = re.split(r'\s*\[PAU\]\s*', chunk)
 
     audio_parts = []
@@ -300,15 +281,11 @@ def synthesize_chunk(model, hps, chunk: str, speaker_id: int,
         if not sc:
             continue
 
-        # Parse [PRO] markers → clean IPA + prolongation positions
         clean_ipa, pro_char_indices = parse_pro_markers(sc)
-
-        # Convert to IDs (also filters invalid chars)
         ids, pro_id_indices = text_to_sequence_with_pro(clean_ipa, pro_char_indices)
         if not ids:
             continue
 
-        # Synthesize — use prolongation path only when needed
         if pro_id_indices:
             audio = _synthesize_with_prolongation(
                 model, hps, ids, pro_id_indices, speaker_id, device, length_scale)
@@ -320,9 +297,8 @@ def synthesize_chunk(model, hps, chunk: str, speaker_id: int,
             audio_parts.append(audio)
 
     if not audio_parts:
-        return np.array([], dtype=np.float32)
+        return np.array([], dtype=np.float32), length_scale
 
-    # Concatenate sub-chunks with [PAU] silence in between
     result = []
     for i, part in enumerate(audio_parts):
         result.append(part)
@@ -330,26 +306,150 @@ def synthesize_chunk(model, hps, chunk: str, speaker_id: int,
             pause_secs = random.uniform(*PAU_SECS_RANGE)
             result.append(np.zeros(int(sr * pause_secs), dtype=np.float32))
 
-    return np.concatenate(result)
+    return np.concatenate(result), length_scale
+
 
 # ---------------------------------------------------------------------------
-# Main
+# Per-sentence synthesis (main programmatic API)
+# ---------------------------------------------------------------------------
+
+def synthesize_sentences(model, hps, raw_ipa: str, speaker_id: int,
+                         device: torch.device) -> list[dict]:
+    """Synthesize each sentence (|-delimited) as a separate audio clip.
+
+    Args:
+        model: loaded VITS model
+        hps: model hyperparameters
+        raw_ipa: full IPA string with dysfluency markers and | boundaries
+        speaker_id: VCTK speaker ID
+        device: torch device
+
+    Returns:
+        List of dicts, one per sentence:
+        {
+            "audio": np.ndarray,
+            "duration_sec": float,
+            "chunk_ipa": str,          # raw IPA for this chunk (with markers)
+            "length_scale": float,
+            "marker_counts": dict,     # {PRO: n, PAU: n, DEL: n, INS: n, REP: n}
+            "num_phonemes": int,
+            "sentence_idx": int,
+        }
+    """
+    sr = hps.data.sampling_rate
+    ipa = preprocess_ipa(raw_ipa)
+    chunks = split_into_chunks(ipa)
+
+    results = []
+    # We also want marker counts from the *raw* per-chunk IPA (before preprocessing).
+    # Split raw on | to align with chunks.
+    raw_chunks = raw_ipa.split("|")
+    raw_chunks = [rc.strip() for rc in raw_chunks if rc.strip()]
+
+    for i, chunk in enumerate(chunks):
+        audio, length_scale = synthesize_chunk(model, hps, chunk, speaker_id, device)
+        if audio.size == 0:
+            continue
+
+        # Use raw chunk for marker counting if available, else fall back to processed
+        raw_chunk = raw_chunks[i] if i < len(raw_chunks) else chunk
+        markers = count_markers(raw_chunk)
+        n_phonemes = count_phonemes(raw_chunk)
+
+        duration = len(audio) / sr
+        results.append({
+            "audio": audio,
+            "duration_sec": round(duration, 3),
+            "chunk_ipa": chunk,
+            "length_scale": round(length_scale, 3),
+            "marker_counts": markers,
+            "num_phonemes": n_phonemes,
+            "sentence_idx": i,
+        })
+
+    return results
+
+
+def save_wav(audio: np.ndarray, path: str, sr: int):
+    """Save audio array as 16-bit WAV."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    write_wav(path, sr, (audio * 32767).astype(np.int16))
+
+
+# ---------------------------------------------------------------------------
+# Metadata logging
+# ---------------------------------------------------------------------------
+
+METADATA_FIELDS = [
+    "file_path", "label", "severity", "speaker_id", "duration_sec",
+    "sentence_idx", "prompt_idx", "num_phonemes", "num_markers_total",
+    "markers_PRO", "markers_PAU", "markers_DEL", "markers_INS", "markers_REP",
+    "markers_SUB", "dysfluency_rate", "length_scale", "ground_truth_text",
+    "chunk_ipa",
+]
+
+def log_metadata(csv_path: str, row: dict):
+    """Append a row to the metadata CSV. Creates file + header if needed."""
+    file_exists = os.path.isfile(csv_path)
+    with open(csv_path, "a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=METADATA_FIELDS)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(row)
+
+
+def build_metadata_row(file_path: str, label: str, severity: str,
+                       speaker_id: int, result: dict, prompt_idx: int,
+                       ground_truth_text: str = "") -> dict:
+    """Build a metadata dict from a synthesize_sentences result entry."""
+    mc = result["marker_counts"]
+    total_markers = sum(mc.values())
+    n_ph = result["num_phonemes"]
+    return {
+        "file_path": file_path,
+        "label": label,
+        "severity": severity,
+        "speaker_id": speaker_id,
+        "duration_sec": result["duration_sec"],
+        "sentence_idx": result["sentence_idx"],
+        "prompt_idx": prompt_idx,
+        "num_phonemes": n_ph,
+        "num_markers_total": total_markers,
+        "markers_PRO": mc["PRO"],
+        "markers_PAU": mc["PAU"],
+        "markers_DEL": mc["DEL"],
+        "markers_INS": mc["INS"],
+        "markers_REP": mc["REP"],
+        "markers_SUB": mc["SUB"],
+        "dysfluency_rate": round(total_markers / max(n_ph, 1), 4),
+        "length_scale": result["length_scale"],
+        "ground_truth_text": ground_truth_text,
+        "chunk_ipa": result["chunk_ipa"],
+    }
+
+
+# ---------------------------------------------------------------------------
+# CLI (standalone usage still works)
 # ---------------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(description="Synthesize dysfluent IPA with VITS (VCTK)")
     parser.add_argument("input", help="Path to phonemes.txt, or '-' for stdin")
-    parser.add_argument("output", nargs="?", default="phonemes.wav", help="Output WAV path")
+    parser.add_argument("output", nargs="?", default="output",
+                        help="Output directory for per-sentence WAVs (default: output/)")
     parser.add_argument("--speaker", type=int, default=None,
                         help="VCTK speaker ID 0–108 (default: random)")
+    parser.add_argument("--label", default="dysfluent", help="Label for metadata")
+    parser.add_argument("--severity", default="unknown", help="Severity for metadata")
+    parser.add_argument("--prompt-idx", type=int, default=0, help="Prompt index for metadata")
+    parser.add_argument("--metadata-csv", default=None,
+                        help="Path to metadata CSV (default: <output>/metadata.csv)")
     args = parser.parse_args()
 
-    # ---- checkpoint check ----
     if not os.path.isfile(CHECKPOINT_PATH):
         print(f"ERROR: VCTK checkpoint not found at {CHECKPOINT_PATH}")
         sys.exit(1)
 
-    # ---- read input ----
     if args.input == "-":
         raw = sys.stdin.read()
     else:
@@ -362,54 +462,37 @@ def main():
         print("ERROR: no phoneme input found")
         sys.exit(1)
 
-    # ---- preprocess markers ----
-    ipa = preprocess_ipa(raw)
-
-    # ---- split into sentence chunks ----
-    chunks = split_into_chunks(ipa)
-    if not chunks:
-        print("ERROR: no valid IPA chunks after preprocessing")
-        sys.exit(1)
-    print(f"Chunks: {len(chunks)}")
-
-    # ---- speaker ----
     speaker_id = args.speaker if args.speaker is not None else random.randint(0, 108)
-    print(f"Speaker ID: {speaker_id}")
-
-    # ---- device ----
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Device: {device}")
+    print(f"Speaker ID: {speaker_id} | Device: {device}")
 
-    # ---- load model ----
     print("Loading VITS (VCTK) model...")
     model, hps = load_model(device)
     sr = hps.data.sampling_rate
-    silence = np.zeros(int(sr * SILENCE_SECS), dtype=np.float32)
 
-    # ---- synthesize ----
-    all_audio = []
-    for i, chunk in enumerate(chunks):
-        preview = chunk[:60] + ("…" if len(chunk) > 60 else "")
-        print(f"  [{i+1:02d}/{len(chunks)}] {preview}")
+    os.makedirs(args.output, exist_ok=True)
+    csv_path = args.metadata_csv or os.path.join(args.output, "metadata.csv")
 
-        audio = synthesize_chunk(model, hps, chunk, speaker_id, device)
-        if audio.size == 0:
-            print(f"           (empty — skipped)")
-            continue
+    results = synthesize_sentences(model, hps, raw, speaker_id, device)
+    print(f"Synthesized {len(results)} sentences")
 
-        all_audio.append(audio)
-        if i < len(chunks) - 1:
-            all_audio.append(silence)
+    for r in results:
+        fname = f"{args.label}_{args.severity}_p{args.prompt_idx}_s{r['sentence_idx']:03d}.wav"
+        wav_path = os.path.join(args.output, fname)
+        save_wav(r["audio"], wav_path, sr)
 
-    if not all_audio:
-        print("ERROR: no audio produced")
-        sys.exit(1)
+        row = build_metadata_row(
+            file_path=wav_path,
+            label=args.label,
+            severity=args.severity,
+            speaker_id=speaker_id,
+            result=r,
+            prompt_idx=args.prompt_idx,
+        )
+        log_metadata(csv_path, row)
+        print(f"  [{r['sentence_idx']:03d}] {r['duration_sec']:.1f}s -> {fname}")
 
-    # ---- save ----
-    full = np.concatenate(all_audio)
-    write_wav(args.output, sr, (full * 32767).astype(np.int16))
-    duration = len(full) / sr
-    print(f"\nSaved {duration:.1f}s → {args.output}")
+    print(f"\nDone. {len(results)} WAVs in {args.output}, metadata in {csv_path}")
 
 
 if __name__ == "__main__":
