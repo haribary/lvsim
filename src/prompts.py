@@ -119,20 +119,23 @@ Output only the simulated dysfluent text. No ellipses, use commas instead. Plain
 # ── L2: Phoneme-level severity inserts ─────────────────────────────────────
 
 _L2_SEVERITY_DISTRIBUTION = {
-    0: """DISTRIBUTION & REALISM (lvPPA — Mild)
+   0: """DISTRIBUTION & REALISM (lvPPA — Mild)
+
 
 - Apply dysfluencies sparingly. Most of the IPA should remain clean.
 - Pauses [PAU] should be infrequent, but multiple hesitations may occur in a short sample if lexical load is high.
 - Occasional phoneme deletions [DEL], especially in longer or multisyllabic words.
 - Rare phonological substitutions [SUB] reflecting phonologically related errors (voicing, place, or manner similarity).
 - Syllable repetitions [REP] should be very rare or absent.
-- Insertions [INS] are not typical and should be avoided unless clearly part of a repair. 
+- Insertions [INS] are not typical and should be avoided unless clearly part of a repair.
 - [PRO] should be extremely rare and tied to hesitation, not rhythmic stuttering,
 - Dysfluencies may loosely cluster near word-level disruptions but may occasionally occur elsewhere during repair.
 - At least 80% of embedded markers ([DEL]/[SUB]/[INS]/[PRO]) must be on content words.
 - Function words may show stalling via repetition (“ðə, ðə”), but avoid embedding [DEL]/[SUB]/[INS]/[PRO] into function words except rarely.""",
 
-    1: """DISTRIBUTION & REALISM (lvPPA — Moderate)
+
+   1: """DISTRIBUTION & REALISM (lvPPA — Moderate)
+
 
 - Dysfluencies cluster near word-level disruptions but may appear elsewhere. Avoid overclustering; aim for natural, bursty distribution.
 - Errors increase with utterance length or phonological complexity.
@@ -146,7 +149,9 @@ _L2_SEVERITY_DISTRIBUTION = {
 - Grammar and articulation clarity remain relatively preserved.
 - Avoid distorted, effortful, or motor-planning–like speech patterns.""",
 
-    2: """DISTRIBUTION & REALISM (lvPPA — Severe)
+
+   2: """DISTRIBUTION & REALISM (lvPPA — Severe)
+
 
 - Apply dysfluencies heavily throughout the IPA output.
 - Co-occurrence is allowed but must remain plausible: avoid marker pileups. Do not stack more than 2 embedded markers inside a single word. If [REP] is used on a word, allow at most one embedded marker in that same word.
@@ -161,19 +166,25 @@ _L2_SEVERITY_DISTRIBUTION = {
 - Function words may show stalling via repetition (“ðə, ðə”), but rarely embed [DEL]/[SUB]/[INS]/[PRO] into function words.""",
 }
 
+
 _L2_TEMPLATE = """
 SYSTEM PROMPT — Phoneme-Level Dysfluency Annotator (Conditioned on Word-Level Dysfluent Text)
 
+
 You are simulating phonological encoding disruption consistent with {severity_label} logopenic variant Primary Progressive Aphasia (lvPPA).
+
 
 You will be given:
 1. A word-level dysfluent sentence (plain text)
 2. The IPA transcription of that sentence in espeak word-grouped format
 
+
 Your task is to introduce phoneme-level dysfluencies into the IPA sequence only.
+
 
 ---
 CLINICAL CONSTRAINTS — READ CAREFULLY
+
 
 lvPPA is characterized by:
 - Word-finding difficulty (already handled upstream)
@@ -181,7 +192,9 @@ lvPPA is characterized by:
 - Impaired phonological working memory (length effect)
 - Relatively preserved articulation and grammar
 
+
 Therefore:
+
 
 - Do NOT simulate motor speech distortion.
 - Do NOT simulate articulatory groping.
@@ -189,183 +202,233 @@ Therefore:
 - Speech should remain non-effortful and phonetically well-formed.
 - Errors reflect unstable phonological encoding, not motor breakdown.
 
+
 Phonological errors should:
 - Increase with word length and syllable complexity.
 - Be more common in multisyllabic content words.
 - Remain phonologically plausible (neighboring phonemes).
+
 
 Prefer phonemic paraphasias and omissions over overt repetition templates:
 - Primary mechanisms: [SUB], [DEL], and occasional [PAU] under high phonological load.
 - Secondary: [PRO] (rare, hesitation-linked).
 - Tertiary (optional): [REP] only as an isolated repair re-attempt; [INS] remains rare.
 
+
 Short, automatic words may remain intact even at higher severity.
+
 
 ---
 
+
 IPA FORMAT — READ THIS CAREFULLY
 
+
 The IPA uses espeak word-grouped format. This is NOT space-per-phone. The rules are:
+
 
 - Each space-separated token is ONE COMPLETE WORD
 - Phones within a word are CONCATENATED with no spaces: "milk" → mˈɪlk
 - Stress marks are embedded inside word tokens: ˈ (primary stress), ˌ (secondary)
 - | marks sentence boundaries — preserve these exactly, do not move or remove them
 
+
 CORRECT input example:
-  aɪ wˈoʊk ˌʌp | bɪkˈʌz aɪ hˈæd ðæt fˈiːlɪŋ
+ aɪ wˈoʊk ˌʌp | bɪkˈʌz aɪ hˈæd ðæt fˈiːlɪŋ
+
 
 WRONG — do not output individual phones separated by spaces:
-  aɪ w oʊ k ˌʌ p (WRONG)
+ aɪ w oʊ k ˌʌ p (WRONG)
+
 
 You must preserve this word-grouped structure in your output.
 
+
 ---
 
+
 OBJECTIVE
+
 
 - Insert realistic phoneme-level dysfluencies into the IPA.
 - Dysfluencies should cluster near word-level disruptions but may appear elsewhere.
 - Output only the modified IPA with inline markers; no explanation.
 
+
 ---
+
 
 DYSFLUENCY TYPES & RULES
 
+
 1. Deletion [DEL]
-   Delete one phoneme CHARACTER from inside a word token.
-   - Replace the deleted character with [DEL] in position.
-   - More likely in longer or multisyllabic words.
-   - Often affects unstressed syllables or medial consonants.
+  Delete one phoneme CHARACTER from inside a word token.
+  - Replace the deleted character with [DEL] in position.
+  - More likely in longer or multisyllabic words.
+  - Often affects unstressed syllables or medial consonants.
 
 
-   Word "milk" = mˈɪlk
-   CORRECT:  mˈɪ[DEL]k        (deleted l)
-   WRONG:    mˈɪlk [DEL]      (marker must be inside the word, not after it)
-   WRONG:    m ˈɪ [DEL] k     (do NOT split the word into separate phone tokens)
+
+
+  Word "milk" = mˈɪlk
+  CORRECT:  mˈɪ[DEL]k        (deleted l)
+  WRONG:    mˈɪlk [DEL]      (marker must be inside the word, not after it)
+  WRONG:    m ˈɪ [DEL] k     (do NOT split the word into separate phone tokens)
+
 
 2. Insertion [INS]
-   Insert one extra phoneme character inside a word token.
-   Place [INS] immediately after the inserted character.
+  Insert one extra phoneme character inside a word token.
+  Place [INS] immediately after the inserted character.
 
-   Word "milk" = mˈɪlk
-   CORRECT:  mˈɪp[INS]lk      (inserted p between ɪ and l)
-   WRONG:    mˈɪlk [INS]      (marker must be inside the word)
+
+  Word "milk" = mˈɪlk
+  CORRECT:  mˈɪp[INS]lk      (inserted p between ɪ and l)
+  WRONG:    mˈɪlk [INS]      (marker must be inside the word)
+
 
 3. Pause/Block [PAU]
-   Represents a mid-utterance block or hesitation.
-   Place [PAU] as a STANDALONE TOKEN between two word tokens.
-   - Do NOT embed [PAU] inside a word's character sequence.
-   - Represents phonological retrieval difficulty.
-   - Should not dominate the output at any severity.
+  Represents a mid-utterance block or hesitation.
+  Place [PAU] as a STANDALONE TOKEN between two word tokens.
+  - Do NOT embed [PAU] inside a word's character sequence.
+  - Represents phonological retrieval difficulty.
+  - Should not dominate the output at any severity.
 
-   CORRECT:  wˈoʊk [PAU] ˌʌp
-   WRONG:    wˈoʊk[PAU]ˌʌp    (no spaces = it merges into one word token)
+
+  CORRECT:  wˈoʊk [PAU] ˌʌp
+  WRONG:    wˈoʊk[PAU]ˌʌp    (no spaces = it merges into one word token)
+
 
 4. Prolongation [PRO]
-   - Apply only to vowels.
-   - Prefer unstressed or mid-word vowels during repair. 
-   - Avoid systematic stress-driven elongation patterns.
-   - Place [PRO] immediately after the vowel.
-   - Must not occur in consecutive words or create rhythmic repetition patterns so as to not resemble stuttering
-   - Use [PRO] ONLY if the same word also contains [SUB]/[DEL], OR the [PRO]-word is immediately adjacent to a [PAU].
-   - Avoid isolated decorative use on otherwise fluent words.
+  - Apply only to vowels.
+  - Prefer unstressed or mid-word vowels during repair.
+  - Avoid systematic stress-driven elongation patterns.
+  - Place [PRO] immediately after the vowel.
+  - Must not occur in consecutive words or create rhythmic repetition patterns so as to not resemble stuttering
+  - Prefer placement adjacent to phonological instability (near [SUB], [DEL], or before multisyllabic words).
+  - Avoid isolated decorative use on otherwise fluent words.
 
-   Word "you know" = jə nˈoʊ
-   CORRECT: jə nˈoʊ[PRO] (prolonged oʊ vowel)
-   WRONG: jə nˈoʊ [PRO] (marker must be inside the word)
+
+  Word "you know" = jə nˈoʊ
+  CORRECT: jə nˈoʊ[PRO] (prolonged oʊ vowel)
+  WRONG: jə nˈoʊ [PRO] (marker must be inside the word)
+
 
 5. Repair Repetition [REP]
-   Represents a SINGLE repair re-attempt on a difficult word (NOT developmental stuttering).
+  Represents a SINGLE repair re-attempt on a difficult word (NOT developmental stuttering).
 
-   Form:
-   Repeat the initial syllable-approximation of a word directly before the full word, connected with ... (three dots, no space before the full word).
-   Place [REP] as a STANDALONE TOKEN after the full word.
 
-   CLINICAL CONSTRAINTS (anti-stutter)
-   - [REP] is repair-only. It must not create rhythmic or multi-cycle repetition patterns.
-   - Only ONE repetition cycle is allowed: <unit>...<full_word> [REP]. Never do <unit>...<unit>...<full_word>.
-   - Avoid clustering: never place [REP] on consecutive words, and avoid placing a second [REP] within the next ~6–10 word tokens.
-   - Prefer content words (nouns/verbs/adjectives), especially multisyllabic or phonologically complex words. Avoid function words unless clearly part of a restart under load.
+  Form:
+  Repeat the initial syllable-approximation of a word directly before the full word, connected with ... (three dots, no space before the full word).
+  Place [REP] as a STANDALONE TOKEN after the full word.
 
-   WHEN TO USE [REP] (repair triggers)
-   Use [REP] ONLY when there is evidence of repair, i.e. at least one of:
-   - The repeated word contains [SUB] or [DEL] (phonological error prompting a re-attempt), OR
-   - The repeated word is adjacent to a [PAU] (planning/assembly hesitation), OR
 
-   SOFT FREQUENCY GUIDANCE (not a quota)
-   - Mild: [REP] is very rare and often absent.
-   - Moderate: occasional [REP], typically isolated.
-   - Severe: [REP] can occur more often but should remain episodic; if you have already used [REP] multiple times in a short stretch, prefer [PAU], [SUB], [DEL] instead of adding more [REP].
+  CLINICAL CONSTRAINTS (anti-stutter)
+  - [REP] is repair-only. It must not create rhythmic or multi-cycle repetition patterns.
+  - Only ONE repetition cycle is allowed: <unit>...<full_word> [REP]. Never do <unit>...<unit>...<full_word>.
+  - Avoid clustering: never place [REP] on consecutive words, and avoid placing a second [REP] within the next ~6–10 word tokens.
+  - Prefer content words (nouns/verbs/adjectives), especially multisyllabic or phonologically complex words. Avoid function words unless clearly part of a restart under load.
 
-   OPERATIONAL DEFINITION OF THE REPEATED UNIT (no explicit syllable boundaries)
-   - Repeat from the start of the word token up to and including the first vowel nucleus.
-   - Treat diphthongs (oʊ, aɪ, eɪ, ɔɪ, aʊ) as a single nucleus unit.
-   - Treat long vowels (iː, uː, etc.) as part of the nucleus.
-   - Do not split affricates (tʃ, dʒ) or diphthongs across the repetition boundary.
-   - Do not delete or move stress marks (ˈ, ˌ) when forming the repeated unit.
 
-   EXAMPLES
-   Word "large" = lˈɑːʤ
-   CORRECT:  lˈɑː...lˈɑːʤ [REP]
-   WRONG:    l...lˈɑːʤ [REP]                (onset only — missing vowel nucleus)
-   WRONG:    lˈɑː...lˈɑː...lˈɑːʤ [REP]      (multi-cycle repetition — stutter-like)
+  WHEN TO USE [REP] (repair triggers)
+  Use [REP] ONLY when there is evidence of repair, i.e. at least one of:
+  - The repeated word contains [SUB] or [DEL] (phonological error prompting a re-attempt), OR
+  - The repeated word is adjacent to a [PAU] (planning/assembly hesitation), OR
+  - Severity ≥ Moderate AND the repeated word is a multisyllabic content word with high phonological complexity (clusters/long token), typically near other instability.
 
-   Word "checking" = tʃˈɛkɪŋ
-   CORRECT:  tʃˈɛk...tʃˈɛkɪŋ [REP]
-   WRONG:    tʃ...tʃˈɛkɪŋ [REP]             (onset only — missing vowel nucleus)
 
-   Word "open" = ˈoʊpən
-   CORRECT:  ˈoʊ...ˈoʊpən [REP]
-   WRONG:    ˈoʊpən...ˈoʊpən [REP]          (repeated entire word, not just initial unit)
+  SOFT FREQUENCY GUIDANCE (not a quota)
+  - Mild: [REP] is very rare and often absent.
+  - Moderate: occasional [REP], typically isolated.
+  - Severe: [REP] can occur more often but should remain episodic; if you have already used [REP] multiple times in a short stretch, prefer [PAU], [SUB], [DEL] instead of adding more [REP].
 
-   The pattern is always: <repeat_unit>...<full_word> [REP]
-   Do not add spaces inside the repetition unit (<repeat_unit>...<full_word> is one token).
+
+  OPERATIONAL DEFINITION OF THE REPEATED UNIT (no explicit syllable boundaries)
+  - Repeat from the start of the word token up to and including the first vowel nucleus.
+  - Treat diphthongs (oʊ, aɪ, eɪ, ɔɪ, aʊ) as a single nucleus unit.
+  - Treat long vowels (iː, uː, etc.) as part of the nucleus.
+  - Do not split affricates (tʃ, dʒ) or diphthongs across the repetition boundary.
+  - Do not delete or move stress marks (ˈ, ˌ) when forming the repeated unit.
+
+
+  EXAMPLES
+  Word "large" = lˈɑːʤ
+  CORRECT:  lˈɑː...lˈɑːʤ [REP]
+  WRONG:    l...lˈɑːʤ [REP]                (onset only — missing vowel nucleus)
+  WRONG:    lˈɑː...lˈɑː...lˈɑːʤ [REP]      (multi-cycle repetition — stutter-like)
+
+
+  Word "checking" = tʃˈɛkɪŋ
+  CORRECT:  tʃˈɛk...tʃˈɛkɪŋ [REP]
+  WRONG:    tʃ...tʃˈɛkɪŋ [REP]             (onset only — missing vowel nucleus)
+
+
+  Word "open" = ˈoʊpən
+  CORRECT:  ˈoʊ...ˈoʊpən [REP]
+  WRONG:    ˈoʊpən...ˈoʊpən [REP]          (repeated entire word, not just initial unit)
+
+
+  The pattern is always: <repeat_unit>...<full_word> [REP]
+  Do not add spaces inside the repetition unit (<repeat_unit>...<full_word> is one token).
+
 
 6. Substitution [SUB]
-   Replace one phoneme CHARACTER inside a word token with a different phoneme.
-   Place [SUB] immediately after the substituted (new) phoneme.
-
-   - The substituted phoneme must be DIFFERENT from the original phoneme.
-   - Must be phonologically related to the original phoneme.
-   - Reflect phonemic paraphasia.
-   - Do NOT substitute randomly.
+  Replace one phoneme CHARACTER inside a word token with a different phoneme.
+  Place [SUB] immediately after the substituted (new) phoneme.
 
 
-   Word "milk" = mˈɪlk
-   CORRECT:  mˈɪn[SUB]k       (substituted n for l — both alveolar, plausible error)
-   WRONG:    mˈɪlk[SUB]       (no phoneme was actually substituted)
-   WRONG:    mˈɪl[SUB]k       (tag must follow the NEW phoneme, not the original)
-   WRONG:    m ˈɪ n[SUB] k    (do NOT split the word into separate phone tokens)
+  - The substituted phoneme must be DIFFERENT from the original phoneme.
+  - Must be phonologically related to the original phoneme.
+  - Reflect phonemic paraphasia.
+  - Do NOT substitute randomly.
 
-   Word "feeling" = fˈiːlɪŋ
-   CORRECT:  fˈiːlɪn[SUB]     (substituted n for ŋ — both nasals, plausible error)
 
-   Prefer articulatorily close substitutions (same place or manner of articulation) at mild and moderate severity.
+
+
+  Word "milk" = mˈɪlk
+  CORRECT:  mˈɪn[SUB]k       (substituted n for l — both alveolar, plausible error)
+  WRONG:    mˈɪlk[SUB]       (no phoneme was actually substituted)
+  WRONG:    mˈɪl[SUB]k       (tag must follow the NEW phoneme, not the original)
+  WRONG:    m ˈɪ n[SUB] k    (do NOT split the word into separate phone tokens)
+
+
+  Word "feeling" = fˈiːlɪŋ
+  CORRECT:  fˈiːlɪn[SUB]     (substituted n for ŋ — both nasals, plausible error)
+
+
+  Prefer articulatorily close substitutions (same place or manner of articulation) at mild and moderate severity.
+
 
 ---
 
+
 SCALING RULE — LENGTH EFFECT
 
+
 Phonological disruption increases when:
+
 
 - Words are multisyllabic
 - Consonant clusters are present
 - The utterance is longer
 - Working-memory load is higher
 
+
 Short, high-frequency, automatic phrases may remain intact.
+
+
 
 
 ---
 
+
 CRITICAL RULES
+
 
 - NEVER split a word token into individual phone tokens separated by spaces.
 - NEVER add spaces between phoneme characters within a word.
 - [PAU] and [REP] are standalone tokens (surrounded by spaces).
 - [DEL], [INS], [PRO], [SUB] are embedded inside word tokens (no surrounding spaces).
-- [PRO] should occur rarely and primarily as brief intra-word vowel lengthening in phonologically complex or multisyllabic content words, often adjacent to repair regions ([SUB]/[DEL]). 
+- [PRO] should occur rarely and primarily as brief intra-word vowel lengthening in phonologically complex or multisyllabic content words, often adjacent to repair regions ([SUB]/[DEL]).
 - Do not use [PRO] primarily on fillers.
 - If multiple [PRO] occur, vary their distribution across the utterance. Avoid uniform density or patterned spacing.
 - [PAU] should be applied most frequently before content words, since pausing is supposed to represent difficulty with lexical retrieval
@@ -375,8 +438,36 @@ CRITICAL RULES
 - Output only IPA with markers. No JSON, no explanation, no extra text.
 ---
 
+
 {severity_distribution}
 """
+
+
+# ── Control: natural filler insertion ──────────────────────────────────────
+
+_CONTROL_TEMPLATE = """Role
+You are simulating natural, fluent speech with typical disfluencies that occur in healthy speakers.
+
+You will be given fluent written text. Your task is to add the kinds of minor disfluencies that naturally occur in spontaneous speech, making the text sound like someone speaking aloud rather than reading.
+
+Natural disfluencies to insert (use a MIX):
+- Filled pauses: "uh", "um" — typically at clause boundaries or before less predictable words
+- Discourse markers: "you know", "like", "I mean", "well", "so" — at clause transitions
+- Brief word repetitions: "I I went" or "the the car" — occasional, especially at phrase onsets
+- Mild restarts: "I was going to, I went to the store" — rare, at most 1-2 per passage
+- Brief hesitations via comma placement — natural pausing points
+
+Constraints:
+- Keep the FULL semantic content intact — no words should be lost or substituted
+- Dysfluency rate should be approximately 5-8% of words (light, natural)
+- Distribute disfluencies at natural prosodic boundaries, not randomly
+- Do NOT add circumlocutions, word-finding failures, or abandoned clauses
+- Do NOT modify any content words — only insert fillers between or before words
+- Grammar and sentence structure must remain fully intact
+- The result should sound like a confident, fluent speaker in casual conversation
+
+Output
+Output only the modified text with natural fillers inserted. Plain text only. No ellipses."""
 
 
 # ── Public API ─────────────────────────────────────────────────────────────
@@ -394,6 +485,11 @@ def get_prompts(severity: int) -> tuple[str, str]:
     l1 = _L1_TEMPLATE.format(severity_label=label, severity_constraints=_L1_SEVERITY_CONSTRAINTS[severity])
     l2 = _L2_TEMPLATE.format(severity_label=label, severity_distribution=_L2_SEVERITY_DISTRIBUTION[severity])
     return l1, l2
+
+
+def get_control_prompt() -> str:
+    """Return the system prompt for control (natural filler) generation."""
+    return _CONTROL_TEMPLATE
 
 
 def get_ref_text():
