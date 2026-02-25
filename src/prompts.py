@@ -442,6 +442,7 @@ CRITICAL RULES
 {severity_distribution}
 """
 
+
 # ── Control: natural filler insertion ──────────────────────────────────────
 
 _CONTROL_TEMPLATE = """Role
