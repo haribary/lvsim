@@ -268,7 +268,7 @@ DYSFLUENCY TYPES & RULES
    - Avoid systematic stress-driven elongation patterns.
    - Place [PRO] immediately after the vowel.
    - Must not occur in consecutive words or create rhythmic repetition patterns so as to not resemble stuttering
-   - Prefer placement adjacent to phonological instability (near [SUB], [DEL], or before multisyllabic words).
+   - Use [PRO] ONLY if the same word also contains [SUB]/[DEL], OR the [PRO]-word is immediately adjacent to a [PAU].
    - Avoid isolated decorative use on otherwise fluent words.
 
    Word "you know" = jə nˈoʊ
@@ -292,7 +292,6 @@ DYSFLUENCY TYPES & RULES
    Use [REP] ONLY when there is evidence of repair, i.e. at least one of:
    - The repeated word contains [SUB] or [DEL] (phonological error prompting a re-attempt), OR
    - The repeated word is adjacent to a [PAU] (planning/assembly hesitation), OR
-   - Severity ≥ Moderate AND the repeated word is a multisyllabic content word with high phonological complexity (clusters/long token), typically near other instability.
 
    SOFT FREQUENCY GUIDANCE (not a quota)
    - Mild: [REP] is very rare and often absent.
