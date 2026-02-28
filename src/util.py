@@ -7,11 +7,12 @@ aɪ w oʊ k ʌ p ɐ b ɪ t ɜː l ɪ ɚ ð ɐ n aɪ w ɔ [PRO] n t ᵻ d b ɪ k 
                       """)
 #print(txt)
 
-import gdown
+# import gdown
 
-# Google Drive "share link" (full URL works)
-url = "https://drive.google.com/file/d/11aHOlhnxzjpdWDpsz1vFDCzbeEfoIxru/view?usp=sharing"
-output = "./vits/pretrained_vctk.pth"  # where to save it
+# # Google Drive "share link" (full URL works)
+# url = "https://drive.google.com/file/d/11aHOlhnxzjpdWDpsz1vFDCzbeEfoIxru/view?usp=sharing"
+# output = "./vits/pretrained_vctk.pth"  # where to save it
 
-# gdown can handle large files automatically
-gdown.download(url, output, quiet=False)
+# # gdown can handle large files automatically
+# gdown.download(url, output, quiet=False)
+

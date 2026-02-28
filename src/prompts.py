@@ -5,6 +5,8 @@ Severity levels:
     1 = moderate
     2 = severe
 """
+import json
+import os
 
 # ── L1: Word-level severity inserts ────────────────────────────────────────
 
@@ -492,13 +494,22 @@ def get_control_prompt() -> str:
     return _CONTROL_TEMPLATE
 
 
-def get_ref_text():
-    return ["""
-My best trip was hiking in New Zealand's South Island with a couple friends. We did a mix: a few days around Queenstown, then drove to Mount Cook, and ended with a shorter multi-day track because none of us wanted to carry huge packs for a week. The scenery was ridiculous—glacial lakes that look fake, wind that hits you sideways, and these quiet stretches where you can hear nothing but your footsteps. The highlight was getting up early, making instant coffee in the cold, and watching the light change on the mountains. We weren't chasing adrenaline; it was more like moving all day, eating a lot, sleeping hard, repeat. On the drive days we'd stop at random viewpoints and just sit there. It's the trip I think about whenever I feel burnt out.
-            """,
-            """
-When I was a kid, my grandparents used to take me to this little lake early in the morning. We'd go before it got hot, bring a thermos of tea, and just sit on the dock with our feet in the water. My grandpa would point out birds and tell me their names like it was important information. I didn't fully get it at the time, but I remember feeling really calm and safe, like there was nowhere else I needed to be. Even now, the smell of lake water and sunscreen takes me straight back.
-            """,
-            """
-What I like about where I live is how easy it is to have a "real" day without planning it. I can walk to get coffee, run errands, and still end up at a park or a trail on a random afternoon. The neighborhoods feel like they have their own personalities, so even a short walk looks different depending on which direction I go. I also like that there's always something going on—farmers markets, small events, weird pop-ups—but it doesn't feel like you have to participate in everything. It's just there if you want it.
-            """]
+SPEECHES_PER_PROMPT = 5
+_GT_SEED_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "gt_seed")
+
+
+def load_gt_seed(prompt_idx: int) -> list[str]:
+    """Load the 5 speech texts from data/gt_seed/gt_{prompt_idx}.json.
+
+    Returns:
+        List of 5 speech strings.
+    """
+    path = os.path.join(_GT_SEED_DIR, f"gt_{prompt_idx}.json")
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    return [data[f"speech{i}"] for i in range(1, SPEECHES_PER_PROMPT + 1)]
+
+
+def get_num_prompts() -> int:
+    """Return the number of gt_seed JSON files available."""
+    return len([f for f in os.listdir(_GT_SEED_DIR) if f.startswith("gt_") and f.endswith(".json")])

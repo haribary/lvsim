@@ -78,6 +78,7 @@ SILENCE_SECS        = 0.30           # silence between sentence-boundary chunks
 PAU_SECS_RANGE      = (0.3, 1.5)    # silence range for [PAU] blocks
 PRO_SECS_RANGE      = (0.17, 0.8)   # extra duration range for [PRO] prolongation
 MAX_CHUNK_CHARS     = 500            # safety upper limit on IPA chars per inference call
+MAX_DURATION_SEC    = 20.0           # if a synthesized chunk exceeds this, re-split and re-synth
 
 PAUSE_CHAR = "…"             # U+2026, in VITS punctuation symbol set
 
@@ -367,7 +368,121 @@ def synthesize_sentences(model, hps, raw_ipa: str, speaker_id: int,
             "sentence_idx": i,
         })
 
-    return results
+    results = _split_long(results, model, hps, speaker_id, device)
+    return _merge_short(results, sr)
+
+
+MIN_DURATION_SEC = 5.0
+MERGE_GAP_SEC = 0.15
+
+
+def _bisect_ipa(ipa: str) -> tuple[str, str]:
+    """Split an IPA string into two halves at the nearest comma or space to the midpoint."""
+    mid = len(ipa) // 2
+    # Prefer splitting at a comma near the midpoint
+    best = -1
+    best_dist = len(ipa)
+    for i, c in enumerate(ipa):
+        if c == ',' and abs(i - mid) < best_dist:
+            best = i
+            best_dist = abs(i - mid)
+    if best != -1 and best_dist < len(ipa) // 4:
+        return ipa[:best + 1].strip(), ipa[best + 1:].strip()
+    # Fall back to nearest space
+    best = -1
+    best_dist = len(ipa)
+    for i, c in enumerate(ipa):
+        if c == ' ' and abs(i - mid) < best_dist:
+            best = i
+            best_dist = abs(i - mid)
+    if best != -1:
+        return ipa[:best].strip(), ipa[best + 1:].strip()
+    # No split point found, return as-is
+    return ipa, ""
+
+
+def _split_long(results: list[dict], model, hps, speaker_id: int,
+                device: torch.device) -> list[dict]:
+    """Re-split and re-synthesize any chunk that exceeds MAX_DURATION_SEC."""
+    sr = hps.data.sampling_rate
+    out = []
+    for r in results:
+        if r["duration_sec"] <= MAX_DURATION_SEC:
+            out.append(r)
+            continue
+        # Bisect the IPA and re-synthesize each half
+        left_ipa, right_ipa = _bisect_ipa(r["chunk_ipa"])
+        if not right_ipa:
+            out.append(r)
+            continue
+        for half_ipa in (left_ipa, right_ipa):
+            audio, length_scale = synthesize_chunk(model, hps, half_ipa, speaker_id, device)
+            if audio.size == 0:
+                continue
+            raw_chunk = half_ipa
+            markers = count_markers(raw_chunk)
+            n_phonemes = count_phonemes(raw_chunk)
+            duration = len(audio) / sr
+            out.append({
+                "audio": audio,
+                "duration_sec": round(duration, 3),
+                "chunk_ipa": half_ipa,
+                "length_scale": round(length_scale, 3),
+                "marker_counts": markers,
+                "num_phonemes": n_phonemes,
+                "sentence_idx": 0,
+            })
+    # Recurse if any half is still too long
+    if any(r["duration_sec"] > MAX_DURATION_SEC for r in out):
+        out = _split_long(out, model, hps, speaker_id, device)
+    # Re-index
+    for i, r in enumerate(out):
+        r["sentence_idx"] = i
+    return out
+
+
+def _merge_two(a: dict, b: dict, sr: int) -> dict:
+    """Merge two result dicts by concatenating audio with a small silence gap."""
+    gap = np.zeros(int(sr * MERGE_GAP_SEC), dtype=np.float32)
+    merged_audio = np.concatenate([a["audio"], gap, b["audio"]])
+    mc = {k: a["marker_counts"][k] + b["marker_counts"][k] for k in a["marker_counts"]}
+    return {
+        "audio": merged_audio,
+        "duration_sec": round(len(merged_audio) / sr, 3),
+        "chunk_ipa": a["chunk_ipa"] + " | " + b["chunk_ipa"],
+        "length_scale": round((a["length_scale"] + b["length_scale"]) / 2, 3),
+        "marker_counts": mc,
+        "num_phonemes": a["num_phonemes"] + b["num_phonemes"],
+        "sentence_idx": a["sentence_idx"],
+    }
+
+
+def _merge_short(results: list[dict], sr: int) -> list[dict]:
+    """Merge any result shorter than MIN_DURATION_SEC into an adjacent result."""
+    if not results:
+        return results
+
+    merged = list(results)
+    changed = True
+    while changed:
+        changed = False
+        for i, r in enumerate(merged):
+            if r["duration_sec"] < MIN_DURATION_SEC:
+                if i + 1 < len(merged):
+                    merged[i] = _merge_two(r, merged[i + 1], sr)
+                    del merged[i + 1]
+                elif i > 0:
+                    merged[i - 1] = _merge_two(merged[i - 1], r, sr)
+                    del merged[i]
+                else:
+                    continue
+                changed = True
+                break
+
+    for i, r in enumerate(merged):
+        r["sentence_idx"] = i
+
+    return merged
 
 
 def save_wav(audio: np.ndarray, path: str, sr: int):
@@ -384,7 +499,7 @@ METADATA_FIELDS = [
     "file_path", "label", "severity", "speaker_id", "duration_sec",
     "sentence_idx", "prompt_idx", "num_phonemes", "num_markers_total",
     "markers_PRO", "markers_PAU", "markers_DEL", "markers_INS", "markers_REP",
-    "markers_SUB", "dysfluency_rate", "length_scale", "ground_truth_text",
+    "markers_SUB", "dysfluency_rate", "length_scale", "gt_idx",
     "chunk_ipa",
 ]
 
@@ -400,7 +515,7 @@ def log_metadata(csv_path: str, row: dict):
 
 def build_metadata_row(file_path: str, label: str, severity: str,
                        speaker_id: int, result: dict, prompt_idx: int,
-                       ground_truth_text: str = "") -> dict:
+                       gt_idx: int = 0) -> dict:
     """Build a metadata dict from a synthesize_sentences result entry."""
     mc = result["marker_counts"]
     total_markers = sum(mc.values())
@@ -423,7 +538,7 @@ def build_metadata_row(file_path: str, label: str, severity: str,
         "markers_SUB": mc["SUB"],
         "dysfluency_rate": round(total_markers / max(n_ph, 1), 4),
         "length_scale": result["length_scale"],
-        "ground_truth_text": ground_truth_text,
+        "gt_idx": gt_idx,
         "chunk_ipa": result["chunk_ipa"],
     }
 

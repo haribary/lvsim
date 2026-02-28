@@ -18,8 +18,9 @@ def phonemize_text(text, language='en-us'):
 
     Example: "I woke up. She ran." -> "aɪ wˈoʊk ˌʌp | ʃiː ɹˈæn"
     """
-    # Split on sentence-ending punctuation to preserve sentence boundaries
-    sentences = [s.strip() for s in re.split(r'[.!?]+', text) if s.strip()]
+    # Split on sentence-ending punctuation and clause-level delimiters
+    # to ensure we get | boundaries even when LLM output drops periods
+    sentences = [s.strip() for s in re.split(r'[.!?;]+|—', text) if s.strip()]
     results = []
     for sentence in sentences:
         ipa = phonemize(
